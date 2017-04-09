@@ -1,0 +1,122 @@
+#!/bin/bash
+#
+# Copyright (C) 2017 Ericsson India Global Services Pvt Ltd. and others.  All rights reserved..
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License v1.0 which accompanies this distribution,
+# and is available at http://www.eclipse.org/legal/epl-v10.html
+#
+# Authors : Rihab Banday, Faseela K
+
+#
+# sample k8s cni plugin for opendaylight
+#
+DIR=$(dirname $(readlink -f $0))
+source $DIR/configuration
+
+# Make sure that directory /var/run/netns exists
+mkdir -p /var/run/netns
+
+# Get the Pid of the container
+PID=`echo $CNI_NETNS | awk -F '/' '{ print $3 }'`
+
+# Generate unique names for the temporary files
+OUTFILE=$DIR/log$PID.tmp
+ARGFILE=$DIR/args$PID.tmp
+
+# Log received information
+echo "------------------------------------------------------------" > $OUTFILE
+date >> $OUTFILE
+echo "CNI_VERSION:     $CNI_VERSION" >> $OUTFILE
+echo "CNI_COMMAND:     $CNI_COMMAND" >> $OUTFILE
+echo "CNI_CONTAINERID: $CNI_CONTAINERID" >> $OUTFILE
+echo "CNI_NETNS:       $CNI_NETNS" >> $OUTFILE
+echo "CNI_IFNAME:      $CNI_IFNAME" >> $OUTFILE
+echo "CNI_ARGS:        $CNI_ARGS" >> $OUTFILE
+echo "CNI_PATH:        $CNI_PATH" >> $OUTFILE
+cat >> $OUTFILE
+
+# Extract tenant name from pod name
+echo $CNI_ARGS > $ARGFILE
+TENANT=$(grep -Po 'K8S_POD_NAMESPACE=\K[^ ]+' $ARGFILE | cut -d ';' -f 1) 2>> $OUTFILE
+rm $ARGFILE
+
+# Fetch ELAN name for the tenant from etcd
+# Make sure that ssh to host running etcd is possible without password (ssh key)
+ELAN=`ssh root@{control-node-ip} "/opt/bin/etcdctl get /poc/tenants/$TENANT/elan"` 2>> $OUTFILE
+
+# Generate device names for the veth link
+VETH=veth$PID
+VETHTMP=veth$PIDtmp
+
+if [ "$CNI_COMMAND" = "ADD" ]
+then
+#
+# ADD command
+#
+
+# Generate an IP address for the new container
+IP=`cat $LAST_IP`
+if [ "$IP" = "254" ]; then IP=1; fi
+IP=$((IP+1))
+echo $IP > $LAST_IP
+IP_ADDR=$IP_PREFIX$IP/16
+
+# Log generated information
+echo "tenant name for this container: $TENANT" >> $OUTFILE
+echo "elan name for this container $ELAN" >> $OUTFILE
+echo "IP address for this container: $IP_ADDR" >> $OUTFILE
+echo "veth endpoint for this container: $VETH" >> $OUTFILE
+
+# Create a veth link using the veth endpoint and the temporary veth endpoint
+ip link add $VETH type veth peer name $VETHTMP 2>> $OUTFILE
+
+# Create a named network namspace
+ln -s /proc/$PID/ns/net /var/run/netns/$PID 2>> $OUTFILE
+
+# Move the temporary endpoint of the veth link to the network namspace of the container
+ip link set $VETHTMP netns $CNI_NETNS 2>> $OUTFILE
+
+# Rename the temporary veth endpoint in the namespace of the container
+ip netns exec $PID ip link set name $CNI_IFNAME dev $VETHTMP
+
+# Add the other endpoint of the veth link to the OVS bridge and bring it up
+ip link set $VETH up 2>> $OUTFILE
+/opt/openvswitch/install/bin/ovs-vsctl add-port $BRIDGE $VETH 2>> $OUTFILE
+
+# Create the new port in the controller and connect it to the ELAN
+$DIR/configure_odl "ADD" $VETH $ELAN $OUTFILE 
+
+# Assign an IP address to the interface in the container and bring it up
+ip netns exec $PID ip address add $IP_ADDR dev $CNI_IFNAME 2>> $OUTFILE
+ip netns exec $PID ip link set dev $CNI_IFNAME up 2>> $OUTFILE
+
+# Add a default route in the container
+#ip netns exec $PID ip route add default via $BRIDGE_IP
+
+else
+#
+# DEL command
+#
+/opt/openvswitch/install/bin/ovs-vsctl del-port $BRIDGE $VETH 2>> $OUTFILE
+ip link del $VETH type veth peer name $CNI_IFNAME 2>> $OUTFILE
+rm -r /var/run/netns/$PID
+$DIR/configure_odl "DEL" $VETH $ELAN $OUTFILE
+fi
+
+cat << EOF
+{
+  "cniVersion": "0.1.0",
+  "ip4": {
+    "ip": "$IP_ADDR"
+  }
+}
+EOF
+
+echo "+++ Plugin execution finished +++" >> $OUTFILE
+
+# Append temporary log to log
+cat $OUTFILE >> $LOGFILE
+rm $OUTFILE
+
+exit 0

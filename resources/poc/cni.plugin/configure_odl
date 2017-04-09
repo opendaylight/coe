@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# Copyright (C) 2017 Ericsson India Global Services Pvt Ltd. and others.  All rights reserved..
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License v1.0 which accompanies this distribution,
+# and is available at http://www.eclipse.org/legal/epl-v10.html
+#
+# Authors : Rihab Banday, Faseela K
+
+#
+# sample k8s cni plugin for opendaylight
+#
+
+# Parameters:
+# $1: Command (ADD/DEL)
+# $2: Interface
+# $3: Elan 
+# $4: Log-file
+
+DIR=$(dirname $(readlink -f $0))
+source $DIR/configuration
+
+OUTFILE=$4
+
+echo "ODL-Conf: $1" >> $OUTFILE
+echo "ODL-Conf: $2" >> $OUTFILE
+echo "ODL-Conf: $CONTROLLER" >> $OUTFILE
+
+if [ "$1" = "ADD" ]
+then
+#
+# ADD
+#
+
+curl -d @- -u admin:admin http://$CONTROLLER/restconf/config/ietf-interfaces:interfaces --header "Content-Type:application/json" 2>> $OUTFILE >> $OUTFILE << EOF
+{
+    "interface": [
+    {
+      "name": "$2:0",
+      "description": "$2:0",
+      "type": "iana-if-type:l2vlan",
+      "enabled": "true",
+      "odl-interface:l2vlan-mode": "trunk",
+      "odl-interface:vlan-id": "0",
+      "odl-interface:parent-interface": "$2"
+    }
+  ]
+}
+EOF
+
+curl -d @- -u admin:admin http://$CONTROLLER/restconf/config/elan:elan-interfaces --header "Content-Type:application/json" 2>> $OUTFILE >> $OUTFILE << EOF
+{
+    "elan-interface": [
+    {
+      "elan-instance-name": "$3",
+      "description": "$2:0",
+      "name": "$2:0"
+    }
+  ]
+}
+EOF
+
+else
+#
+# DEL
+#
+curl -X DELETE -u admin:admin http://$CONTROLLER/restconf/config/elan:elan-interfaces/elan-interface/$2:0 2>> $OUTFILE >> $OUTFILE
+
+curl -X DELETE -u admin:admin http://$CONTROLLER/restconf/config/ietf-interfaces:interfaces/interface/$2:0 2>> $OUTFILE >> $OUTFILE
+
+fi
+
