@@ -6,7 +6,7 @@
 # terms of the Eclipse Public License v1.0 which accompanies this distribution,
 # and is available at http://www.eclipse.org/legal/epl-v10.html
 #
-# Authors : Rihab Banday, Faseela K
+# Authors : Volker Luessem, Rihab Banday, Faseela K
 
 #
 # configuration parameters
@@ -20,4 +20,7 @@ BRIDGE="br1"
 BRIDGE_IP="172.16.7.1"
 #ELAN="kubecni"
 CONTROLLER="{odl-ip}:8181"
+ETCD="127.0.0.1:4001"
+PARENTIF="parent1"
+DIFFERENTIATOR="A"
 no_proxy="{proxy}"
