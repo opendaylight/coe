@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Copyright (C) 2017 Ericsson India Global Services Pvt Ltd. and others.  All rights reserved..
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License v1.0 which accompanies this distribution,
+# and is available at http://www.eclipse.org/legal/epl-v10.html
+#
+# Authors : Volker Luessem, Rihab Banday, Faseela K
+
+#
+# get-ip script referenced by cni-odl for ip address allocation 
+#
+
+# Parameters
+# $1: etcd key for the IP counter
+# $2: etcd endpoint
+
+SUCCESS=false
+HIGHEST_IP=65534
+
+while [ "$SUCCESS" == "false" ]
+do
+
+# get current value from key...
+OLD=$(/opt/bin/etcdctl --endpoints $2 get $1) > /dev/null
+if [ -z $OLD ]
+then
+  echo "$OLD"
+  exit 1
+fi
+
+# ...and increment it
+if [ "$OLD" = "$HIGHEST_IP" ]; then OLD=10; fi
+NEW=$((OLD+1))
+
+# try to write the new value
+/opt/bin/etcdctl --endpoints $2 set $1 $NEW --swap-with-value $OLD  > /dev/null
+
+# exit loop if successfully written
+if [ $? -eq 0 ]
+then
+SUCCESS=true
+fi
+
+done
+
+echo $NEW
