@@ -131,7 +131,7 @@ ip link set $VETH up 2>> $OUTFILE
 /opt/css-3/install/bin/ovs-vsctl-3 add-port $BRIDGE $VETH 2>> $OUTFILE
 
 # Create the new port in the controller and connect it to the ELAN
-$DIR/configure_csc "ADD" $VETH $ELAN $OUTFILE
+$DIR/configure_odl "ADD" $VETH $ELAN $OUTFILE
 
 # Assign an IP address to the interface in the container and bring it up
 ip netns exec $PID ip address add $IP_ADDR dev $CNI_IFNAME 2>> $OUTFILE
@@ -150,7 +150,7 @@ else
 /opt/css-3/install/bin/ovs-vsctl-3 del-port $BRIDGE $VETH 2>> $OUTFILE
 ip link del $VETH type veth peer name $CNI_IFNAME 2>> $OUTFILE
 rm -r /var/run/netns/$PID
-$DIR/configure_csc "DEL" $VETH $ELAN $OUTFILE
+$DIR/configure_odl "DEL" $VETH $ELAN $OUTFILE
 fi
 
 cat << EOF
