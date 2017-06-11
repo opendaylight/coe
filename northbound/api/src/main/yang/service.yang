@@ -1,0 +1,57 @@
+module service {
+    yang-version 1;
+    namespace "urn:opendaylight:coe:northbound:service";
+    prefix "coe";
+
+    description
+        "This YANG module defines the generic configuration data for Container Orchestration Engine.";
+
+    revision "2017-06-11" {
+        description "Initial revision.";
+    }
+
+    import ietf-inet-types {
+        prefix inet;
+        revision-date "2013-07-15";
+    }
+
+    import ietf-yang-types {
+        prefix yang;
+        revision-date "2013-07-15";
+    }
+
+    organization "OpenDaylight COE Group";
+
+    contact "Prem Sankar G <prem.sankar.g@ericsson.com";
+
+  /*
+   * Configuration data nodes
+   */
+    container service-information {
+        description
+            "Container Configuration Parameters. ";
+
+        list services {
+            key "uid";
+
+            description
+                "list of all configured services. ";
+
+            leaf uid {
+                type    yang:uuid;
+                description "UUID representing the service ";
+            }
+
+            leaf cluster-ip-address {
+                type inet:ip-address;
+                description
+                    "front-end IP Address for all the pods tagged under the service. ";
+            }
+
+            leaf-list endpoints {
+                type    yang:uuid;
+                description "UUID representing the end-point(pod). ";
+            }
+        }
+    }
+}
