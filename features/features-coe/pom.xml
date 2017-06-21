@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright © 2017 Copyright c 2017 Ericsson India Global Services Pvt Ltd. and others.All rights reserved. and others. All rights reserved.
+Copyright © 2017 Copyright c 2017 Ericsson India Global Services Pvt Ltd. and others.All rights reserved.
+
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License v1.0 which accompanies this distribution,
 and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
@@ -10,19 +11,20 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
 
   <parent>
     <groupId>org.opendaylight.odlparent</groupId>
-    <artifactId>karaf4-parent</artifactId>
+    <artifactId>feature-repo-parent</artifactId>
     <version>2.0.0</version>
+    <relativePath />
   </parent>
 
   <groupId>org.opendaylight.coe</groupId>
-  <artifactId>karaf</artifactId>
+  <artifactId>features-coe</artifactId>
   <version>0.2.0-SNAPSHOT</version>
-  <name>${project.artifactId}</name>
+  <packaging>feature</packaging>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>${project.groupId}</groupId>
+        <groupId>org.opendaylight.coe</groupId>
         <artifactId>coe-artifacts</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
@@ -33,33 +35,18 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
 
   <dependencies>
     <dependency>
-      <!-- scope is compile so all features (there is only one) are installed
-      into startup.properties and the feature repo itself is not installed -->
-      <groupId>org.apache.karaf.features</groupId>
-      <artifactId>framework</artifactId>
-      <type>kar</type>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>odl-coe-api</artifactId>
+      <version>${project.version}</version>
+      <type>xml</type>
+      <classifier>features</classifier>
     </dependency>
-
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>features-coe</artifactId>
+      <artifactId>odl-coe-impl</artifactId>
       <version>${project.version}</version>
-      <classifier>features</classifier>
       <type>xml</type>
-      <scope>runtime</scope>
+      <classifier>features</classifier>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <!-- DO NOT deploy the karaf artifact -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>
