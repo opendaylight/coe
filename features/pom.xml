@@ -27,6 +27,6 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
   <modules>
     <module>features-coe</module>
     <module>odl-coe-api</module>
-    <module>odl-coe-impl</module>
+    <module>odl-coe</module>
   </modules>
 </project>

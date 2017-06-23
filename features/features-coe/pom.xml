@@ -43,7 +43,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>odl-coe-impl</artifactId>
+      <artifactId>odl-coe</artifactId>
       <version>${project.version}</version>
       <type>xml</type>
       <classifier>features</classifier>

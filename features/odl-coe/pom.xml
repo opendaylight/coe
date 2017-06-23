@@ -17,10 +17,10 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
   </parent>
 
   <groupId>org.opendaylight.coe</groupId>
-  <artifactId>odl-coe-impl</artifactId>
+  <artifactId>odl-coe</artifactId>
   <version>0.2.0-SNAPSHOT</version>
   <packaging>feature</packaging>
-  <name>OpenDaylight :: coe :: Impls</name>
+  <name>OpenDaylight :: coe</name>
 
   <dependencyManagement>
     <dependencies>
@@ -38,6 +38,16 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
       <dependency>
         <groupId>org.opendaylight.controller</groupId>
         <artifactId>odl-mdsal-broker</artifactId>
+        <version>1.6.0-SNAPSHOT</version>
+        <type>xml</type>
+        <classifier>features</classifier>
+      </dependency>
+      <!-- Add restconf as part of main coe feature,
+        as it is very much needed for COE watcher module
+        to run. -->
+      <dependency>
+        <groupId>org.opendaylight.netconf</groupId>
+        <artifactId>odl-restconf</artifactId>
         <version>1.6.0-SNAPSHOT</version>
         <type>xml</type>
         <classifier>features</classifier>
