@@ -1,0 +1,94 @@
+[[local|localrc]]
+
+# If you want stacking to clone new versions of the enabled services replace NO with YES
+RECLONE="NO"
+
+# Log settings
+LOGFILE=devstack.log
+SCREEN_LOGDIR=/opt/stack/data/log
+LOG_COLOR=False
+
+#Set the HOST IP-Address before stacking
+HOST_IP={IP-Address}
+HOST_NAME=odlKuryrVM
+SERVICE_HOST=$HOST_IP
+SERVICE_HOST_NAME=$HOST_NAME
+
+# Credentials
+ADMIN_PASSWORD=admin
+DATABASE_PASSWORD=pass
+RABBIT_PASSWORD=pass
+SERVICE_PASSWORD=admin
+SERVICE_TOKEN=admin
+
+VNCSERVER_PROXYCLIENT_ADDRESS=${HOST_IP}
+VNCSERVER_LISTEN=0.0.0.0
+
+MYSQL_HOST=$SERVICE_HOST
+RABBIT_HOST=$SERVICE_HOST
+GLANCE_HOSTPORT=$SERVICE_HOST:9292
+KEYSTONE_AUTH_HOST=$SERVICE_HOST
+KEYSTONE_SERVICE_HOST=$SERVICE_HOST
+
+# Enable Keystone v3
+IDENTITY_API_VERSION=3
+
+# In pro of speed and being lightweight, we will be explicit in regards to which services we enable
+disable_all_services
+
+#kuryr-k8s plugin
+enable_plugin kuryr-kubernetes https://git.openstack.org/openstack/kuryr-kubernetes
+
+# ODL Configuration
+enable_plugin networking-odl http://git.openstack.org/openstack/networking-odl
+enable_service odl-neutron odl-compute
+ODL_L3=True
+FLOATING_RANGE=172.24.5.0/24
+PUBLIC_NETWORK_GATEWAY=172.24.5.1
+Q_USE_PUBLIC_VETH=True
+Q_PUBLIC_VETH_EX=veth-pub-ex
+Q_PUBLIC_VETH_INT=veth-pub-int
+ODL_PROVIDER_MAPPINGS=br-ex:veth-pub-int
+#ODL_PROVIDER_MAPPINGS=${ODL_PROVIDER_MAPPINGS:-physnet1:enp0s8}
+ODL_MODE=manual
+ODL_PORT=8080
+#Set the ODL HOST IP-Address before stacking
+ODL_MGR_IP={ODL-HOST-IP-Address}
+NEUTRON_CREATE_INITIAL_NETWORKS=True
+SKIP_OVS_INSTALL=True
+
+# Neutron services
+enable_service q-dhcp q-svc q-meta neutron q-lbaasv2
+
+# Horizon service
+enable_service horizon
+
+# LBaaSv2 service and Haproxy agent
+enable_plugin neutron-lbaas  git://git.openstack.org/openstack/neutron-lbaas
+NEUTRON_LBAAS_SERVICE_PROVIDERV2="LOADBALANCERV2:opendaylight:networking_odl.lbaas.driver_v2.OpenDaylightLbaasDriverV2:default"
+
+# Keystone, glance & Nova
+enable_service key g-api g-reg n-api n-cond n-cpu n-crt n-novnc n-sch n-cauth n-xvnc n-obj
+
+# dependencies
+enable_service mysql
+enable_service rabbit
+
+# By default use all the services from the kuryr-kubernetes plugin
+
+# Docker
+enable_service docker
+
+# Etcd
+enable_service etcd3
+
+# Kubernetes
+enable_service kubernetes-api
+enable_service kubernetes-controller-manager
+enable_service kubernetes-scheduler
+
+# Kubelet
+enable_service kubelet
+
+# Kuryr watcher
+enable_service kuryr-kubernetes

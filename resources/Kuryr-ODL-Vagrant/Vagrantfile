@@ -1,0 +1,25 @@
+$init = <<SCRIPT
+  apt-get update
+  apt-get install -y git
+SCRIPT
+
+$devstack = <<SCRIPT
+  git clone https://git.openstack.org/openstack-dev/devstack
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-16.04"
+
+  config.vm.network :public_network, bridge: "en0: Wi-Fi (AirPort)"
+
+  config.vm.define "vm0" do | vm0 |
+    # Provisioning
+    config.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+      v.customize ["modifyvm", :id, "--memory", "8096"]
+    end
+    vm0.vm.hostname = "odlKuryrVM"
+    vm0.vm.provision "shell", :inline => $init
+    vm0.vm.provision :shell, privileged: false, :inline => $devstack
+  end
+end
