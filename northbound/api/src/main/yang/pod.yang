@@ -1,0 +1,102 @@
+module pod {
+    yang-version 1;
+    namespace "urn:opendaylight:coe:northbound:pod";
+    prefix "coe";
+
+    description
+        "This YANG module defines the generic configuration data for Container Orchestration Engine.";
+
+    revision "2017-06-11" {
+        description "Initial revision.";
+    }
+
+    import ietf-inet-types {
+        prefix inet;
+        revision-date "2013-07-15";
+    }
+
+    import ietf-yang-types {
+        prefix yang;
+        revision-date "2013-07-15";
+    }
+
+    organization "OpenDaylight COE Group";
+
+    contact "Prem Sankar G <prem.sankar.g@ericsson.com";
+
+  /*
+   * Configuration data nodes
+   */
+    container coe {
+        description
+            "Container Configuration Parameters. ";
+
+        list pods {
+            key "uid";
+
+            description
+                "list of all configured pods in the network. ";
+
+            uses pod_attributes;
+        }
+    }
+
+    grouping pod_attributes {
+        description "Kubernetes pod attributes needed by ODL Northbound. ";
+
+        leaf version {
+            type string;
+            description
+                "CNI Version used by COE system.
+
+                CNI (Container Network Interface), consists of a specification
+                and libraries for writing plugins to configure network interfaces
+                in Linux containers, along with a number of supported plugins. ";
+        }
+
+        leaf uid {
+            type    yang:uuid;
+            description "UUID representing the pod ";
+        }
+
+        list interface {
+            key uid;
+
+            leaf uid {
+                type    yang:uuid;
+                description "UUID representing the interface within a pod ";
+            }
+
+            leaf ip-address {
+                type inet:ip-address;
+                description "IP address assigned by IPAM module.";
+            }
+
+            uses network-attributes;
+        }
+    }
+
+    grouping network-attributes {
+        leaf network-id {
+            type    yang:uuid;
+            description "UUID representing the network";
+        }
+
+        leaf network-type {
+            type enumeration {
+                enum "FLAT";
+                enum "VLAN";
+                enum "VXLAN";
+                enum "GRE";
+            }
+        }
+
+        leaf segmentation-id {
+            type uint32;
+            description "Optional. Isolated segment on the physical network.
+            If segment-type is vlan, this ID is a vlan identifier.
+            If segment-type is vxlan, this ID is a vni.
+            If segment-type is flat/gre, this ID is set to 0";
+        }
+    }
+}
