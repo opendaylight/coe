@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
-
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/tools/cache"
+
+	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
 type Watchers struct {
@@ -15,59 +13,58 @@ type Watchers struct {
 	EndpointsWatcher cache.ResourceEventHandler
 }
 
-type printPodWatcher struct{}
+type podEventWatcher struct {
+	backend backends.Coe
+}
 
-func (watcher printPodWatcher) OnAdd(obj interface{}) {
+func (watcher podEventWatcher) OnAdd(obj interface{}) {
 	pod := obj.(*v1.Pod)
-	fmt.Println("ADD Pod:", pod.GetUID(), pod.GetName(), pod.GetNamespace())
-	printJson(pod)
+	watcher.backend.AddPod(pod)
 }
-func (watcher printPodWatcher) OnUpdate(oldObj, newObj interface{}) {
-	//fmt.Println("UPDATE: ", oldObj, newObj)
+func (watcher podEventWatcher) OnUpdate(oldObj, newObj interface{}) {
+	oldPod := oldObj.(*v1.Pod)
+	newPod := newObj.(*v1.Pod)
+	watcher.backend.UpdatePod(oldPod, newPod)
 }
-func (watcher printPodWatcher) OnDelete(obj interface{}) {
+func (watcher podEventWatcher) OnDelete(obj interface{}) {
 	pod := obj.(*v1.Pod)
-	fmt.Println("DELETE Pod:", pod.GetUID(), pod.GetName(), pod.GetNamespace())
-	printJson(pod)
+	watcher.backend.DeletePod(pod)
 }
 
-type printServiceWatcher struct{}
+type serviceEventWatcher struct {
+	backend backends.Coe
+}
 
-func (watcher printServiceWatcher) OnAdd(obj interface{}) {
+func (watcher serviceEventWatcher) OnAdd(obj interface{}) {
 	service := obj.(*v1.Service)
-	fmt.Println("ADD Service:", service.GetUID(), service.GetName(), service.GetNamespace())
-	printJson(service)
+	watcher.backend.AddService(service)
 }
-func (watcher printServiceWatcher) OnUpdate(oldObj, newObj interface{}) {
-	//fmt.Println("UPDATE: ", oldObj, newObj)
+func (watcher serviceEventWatcher) OnUpdate(oldObj, newObj interface{}) {
+	oldService := oldObj.(*v1.Service)
+	newService := newObj.(*v1.Service)
+	watcher.backend.UpdateService(oldService, newService)
 }
-func (watcher printServiceWatcher) OnDelete(obj interface{}) {
+func (watcher serviceEventWatcher) OnDelete(obj interface{}) {
 	service := obj.(*v1.Service)
-	fmt.Println("DELETE Service:", service.GetUID(), service.GetName(), service.GetNamespace())
-	printJson(service)
+	watcher.backend.DeleteService(service)
 }
 
-type printEndpointWatcher struct{}
-
-func (watcher printEndpointWatcher) OnAdd(obj interface{}) {
-	endpoint := obj.(*v1.Endpoints)
-	fmt.Println("ADD Endpoint:", endpoint.GetUID(), endpoint.GetName(), endpoint.GetNamespace())
-	printJson(endpoint)
+type endpointsEventWatcher struct {
+	backend backends.Coe
 }
 
-func (watcher printEndpointWatcher) OnUpdate(oldObj, newObj interface{}) {
-	//fmt.Println("UPDATE: ", oldObj, newObj)
-}
-func (watcher printEndpointWatcher) OnDelete(obj interface{}) {
-	endpoint := obj.(*v1.Endpoints)
-	fmt.Println("DELETE Endpoint:", endpoint.GetUID(), endpoint.GetName(), endpoint.GetNamespace())
-	printJson(endpoint)
+func (watcher endpointsEventWatcher) OnAdd(obj interface{}) {
+	endpoints := obj.(*v1.Endpoints)
+	watcher.backend.AddEndpoints(endpoints)
 }
 
-func printJson(obj interface{}) {
-	b, err := json.MarshalIndent(obj, "", "    ")
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Println(string(b))
+func (watcher endpointsEventWatcher) OnUpdate(oldObj, newObj interface{}) {
+	oldEndpoints := oldObj.(*v1.Endpoints)
+	newEndpoints := newObj.(*v1.Endpoints)
+	watcher.backend.UpdateEndpoints(oldEndpoints, newEndpoints)
+}
+
+func (watcher endpointsEventWatcher) OnDelete(obj interface{}) {
+	endpoints := obj.(*v1.Endpoints)
+	watcher.backend.DeleteEndpoints(endpoints)
 }
