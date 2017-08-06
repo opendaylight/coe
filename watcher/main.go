@@ -14,6 +14,9 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
+	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends/odl"
 )
 
 var (
@@ -57,33 +60,37 @@ func main() {
 		}
 	}()
 
-	go watchPods(clientSet, wg, shutdown)
-	go watchServices(clientSet, wg, shutdown)
-	go watchEndpoints(clientSet, wg, shutdown)
+	var backend backends.Coe
+
+	backend = odl.New("http://127.0.0.1:8181")
+
+	go watchPods(clientSet, wg, backend, shutdown)
+	go watchServices(clientSet, wg, backend, shutdown)
+	go watchEndpoints(clientSet, wg, backend, shutdown)
 
 	wg.Wait()
 }
 
-func watchPods(clientSet kubernetes.Interface, wg *sync.WaitGroup, shutdown <-chan struct{}) {
+func watchPods(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
 	informer := informers.NewSharedInformerFactory(clientSet, 10*time.Minute)
 	podInformer := informer.Core().V1().Pods()
-	podInformer.Informer().AddEventHandler(printPodWatcher{})
+	podInformer.Informer().AddEventHandler(podEventWatcher{backend: backend})
 	podInformer.Informer().Run(shutdown)
 	wg.Done()
 }
 
-func watchServices(clientSet kubernetes.Interface, wg *sync.WaitGroup, shutdown <-chan struct{}) {
+func watchServices(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
 	informer := informers.NewSharedInformerFactory(clientSet, 10*time.Minute)
 	serviceInformer := informer.Core().V1().Services()
-	serviceInformer.Informer().AddEventHandler(printServiceWatcher{})
+	serviceInformer.Informer().AddEventHandler(serviceEventWatcher{backend: backend})
 	serviceInformer.Informer().Run(shutdown)
 	wg.Done()
 }
 
-func watchEndpoints(clientSet kubernetes.Interface, wg *sync.WaitGroup, shutdown <-chan struct{}) {
+func watchEndpoints(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
 	informer := informers.NewSharedInformerFactory(clientSet, 10*time.Minute)
 	endpointInformer := informer.Core().V1().Endpoints()
-	endpointInformer.Informer().AddEventHandler(printEndpointWatcher{})
+	endpointInformer.Informer().AddEventHandler(endpointsEventWatcher{backend: backend})
 	endpointInformer.Informer().Run(shutdown)
 	wg.Done()
 }
