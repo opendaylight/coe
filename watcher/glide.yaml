@@ -1,0 +1,4 @@
+package: git.opendaylight.org/gerrit/p/coe.git/watcher # e.g. github.com/foo/bar
+import:
+- package: k8s.io/client-go
+  version: ^v3.0.0
