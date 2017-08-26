@@ -1,4 +1,6 @@
-package: git.opendaylight.org/gerrit/p/coe.git/watcher # e.g. github.com/foo/bar
+package: git.opendaylight.org/gerrit/p/coe.git/watcher
 import:
 - package: k8s.io/client-go
   version: ^v3.0.0
+- package: github.com/spf13/viper
+- package: github.com/spf13/cobra
