@@ -1,0 +1,55 @@
+module k8s-node {
+    namespace "urn:opendaylight:coe:northbound:k8s-node";
+    prefix "coe";
+
+    revision 2017-08-29 {
+        description "Initial revision";
+    }
+
+    import ietf-inet-types {
+        prefix inet;
+        revision-date "2013-07-15";
+    }
+
+    import ietf-yang-types {
+        prefix yang;
+        revision-date "2013-07-15";
+    }
+
+    organization "OpenDaylight COE Group";
+
+    contact "Mohamed ElSerngawy m.elserngawy@gmail.com";
+
+    container k8s-nodes-info {
+        description
+            "Kunernetes Nodes information";
+
+        leaf id {
+            description "Kuberntes node's data tree id";
+            type string;
+        }
+        list k8s-nodes {
+            description "list of Kuberentes nodes";
+
+            key "uid";
+            leaf uid {
+                type yang:uuid;
+                description "UUID represents the K8s node";
+            }
+            leaf host-name {
+                type string;
+                description "The hostname as reported by the node’s kernel";
+            }
+            leaf external-ip-address {
+                type inet:ip-address;
+                description "The IP address of the node that is externally routable";
+            }
+            leaf internal-ip-address {
+                type inet:ip-address;
+                description "The IP address of the node that is routable only within the k8s cluster.
+                    We assume that this IP address is reachable by Opendaylight and it will be used to
+                    set the default configurations";
+            }
+        }
+    }
+}
