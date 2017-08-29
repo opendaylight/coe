@@ -76,9 +76,9 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		viper.SetConfigName("coe")      // name of config file (without extension)
+		viper.AddConfigPath(".")
 		viper.AddConfigPath("$HOME")    // adding home directory as first search path
 		viper.AddConfigPath("/etc/coe") // adding home directory as first search path
-		viper.AddConfigPath(".")
 		viper.AutomaticEnv() // read in environment variables that match
 	}
 
