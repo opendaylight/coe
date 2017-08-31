@@ -3,10 +3,12 @@ package backends
 import (
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/tools/cache"
+	//"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
 type Watchers struct {
 	PodWatcher       cache.ResourceEventHandler
+	NodeWatcher      cache.ResourceEventHandler
 	ServiceWatcher   cache.ResourceEventHandler
 	EndpointsWatcher cache.ResourceEventHandler
 }
@@ -65,4 +67,24 @@ func (watcher EndpointsEventWatcher) OnUpdate(oldObj, newObj interface{}) {
 func (watcher EndpointsEventWatcher) OnDelete(obj interface{}) {
 	endpoints := obj.(*v1.Endpoints)
 	watcher.Backend.DeleteEndpoints(endpoints)
+}
+
+type NodesEventWatcher struct {
+	Backend Coe
+}
+
+func (watcher NodesEventWatcher) OnAdd(obj interface{}) {
+	node := obj.(*v1.Node)
+	watcher.Backend.AddNode(node)
+}
+
+func (watcher NodesEventWatcher) OnUpdate(oldObj, newObj interface{}) {
+	oldNode := oldObj.(*v1.Node)
+	newNode := newObj.(*v1.Node)
+	watcher.Backend.UpdateNode(oldNode, newNode)
+}
+
+func (watcher NodesEventWatcher) OnDelete(obj interface{}) {
+	node := obj.(*v1.Node)
+	watcher.Backend.DeleteNode(node)
 }

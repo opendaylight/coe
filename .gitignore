@@ -21,6 +21,7 @@ target-ide
 .fbExcludeFilterFile
 .factorypath
 .fbExcludeFilterFile
+vendor
 yang-gen-config
 yang-gen-sal
 classes
