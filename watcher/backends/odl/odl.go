@@ -8,9 +8,11 @@ import (
 	"net/http"
 
 	"k8s.io/client-go/pkg/api/v1"
+	//"src/k8s.io/client-go/pkg/api/v1"
 
 	"fmt"
-	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
+	//"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
+	"../../backends" // same project packages should be refereed by directory
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"os"
@@ -38,8 +40,7 @@ type backend struct {
 func (b backend) AddPod(pod *v1.Pod) error {
 	js, _ := json.MarshalIndent(pod, "", "    ")
 	js = createPodStructure(pod)
-	b.putPod(string(pod.GetUID()), js)
-	return nil
+	return b.putPod(string(pod.GetUID()), js)
 }
 
 func (b backend) UpdatePod(old, new *v1.Pod) error {
@@ -51,26 +52,18 @@ func (b backend) DeletePod(pod *v1.Pod) error {
 	return nil
 }
 
-func createPodStructure(pod *v1.Pod) []byte {
-	ipAddress := generateIP()
-	interfaces := make([]Interface, 1)
-	interfaces[0] = Interface{
-		UID:            pod.GetUID(),
-		NetworkID:      "00000000-0000-0000-0000-000000000000",
-		IPAddress:      ipAddress,
-		NetworkType:    "FLAT",
-		SegmentationID: 0,
-	}
-	pods := make([]Pod, 1)
-	pods[0] = Pod{
-		UID:        pod.GetUID(),
-		Interfaces: interfaces,
-	}
-	coe := Coe{
-		Pods: pods,
-	}
-	js, _ := json.Marshal(coe)
-	return js
+func (b backend) AddNode(node *v1.Node) error {
+	js, _ := json.MarshalIndent(node, "", "    ")
+	js = createNodeStructure(node)
+	return b.putNode(string(node.GetUID()), js)
+}
+
+func (b backend) UpdateNode(old, new *v1.Node) error {
+	return nil
+}
+
+func (b backend) DeleteNode(node *v1.Node) error {
+	return b.deleteNode(node.GetUID())
 }
 
 func (b backend) AddService(service *v1.Service) error {
@@ -122,33 +115,41 @@ func (b backend) doRequest(method, url string, reader io.Reader) error {
 }
 
 func (b backend) putPod(uid string, js []byte) error {
-	return b.doRequest(http.MethodPut, b.urlPrefix+"/restconf/config/pod:coe/pods/"+uid, bytes.NewBuffer(js))
+	return b.doRequest(http.MethodPut, b.urlPrefix + PodsUrl + uid, bytes.NewBuffer(js))
 }
 
 func (b backend) deletePod(uid string) error {
-	return b.doRequest(http.MethodDelete, b.urlPrefix+"/restconf/config/pod:coe/pods/"+uid, nil)
+	return b.doRequest(http.MethodDelete, b.urlPrefix + PodsUrl + uid, nil)
+}
+
+func (b backend) putNode(uid string, js []byte) error {
+	return b.doRequest(http.MethodPut, b.urlPrefix + NodesUrl + uid, bytes.NewBuffer(js))
+}
+
+func (b backend) deleteNode(uid string) error {
+	return b.doRequest(http.MethodDelete, b.urlPrefix + NodesUrl + uid, nil)
 }
 
 func (b backend) putService(uid string, js []byte) error {
-	return b.doRequest(http.MethodPut, b.urlPrefix+"/restconf/config/pod:coe/pods/"+uid, bytes.NewBuffer(js))
+	return b.doRequest(http.MethodPut, b.urlPrefix + ServicesUrl + uid, bytes.NewBuffer(js))
 }
 
 func (b backend) deleteService(uid string) error {
-	return b.doRequest(http.MethodDelete, b.urlPrefix+"/restconf/config/pod:coe/pods/"+uid, nil)
+	return b.doRequest(http.MethodDelete, b.urlPrefix + ServicesUrl + uid, nil)
 }
 
 func (b backend) putEndpoints(uid string, js []byte) error {
-	return b.doRequest(http.MethodPut, b.urlPrefix+"/restconf/config/pod:coe/pods/"+uid, bytes.NewBuffer(js))
+	return b.doRequest(http.MethodPut, b.urlPrefix + EndPointsUrl + uid, bytes.NewBuffer(js))
 }
 
 func (b backend) deleteEndpoints(uid string) error {
-	return b.doRequest(http.MethodDelete, b.urlPrefix+"/restconf/config/pod:coe/pods/"+uid, nil)
+	return b.doRequest(http.MethodDelete, b.urlPrefix + EndPointsUrl + uid, nil)
 }
 
 func Watch(clientSet kubernetes.Interface, backend backends.Coe) {
 	wg := &sync.WaitGroup{}
 
-	wg.Add(3)
+	wg.Add(4)
 
 	shutdown := make(chan struct{})
 
@@ -166,6 +167,7 @@ func Watch(clientSet kubernetes.Interface, backend backends.Coe) {
 	go watchPods(clientSet, wg, backend, shutdown)
 	go watchServices(clientSet, wg, backend, shutdown)
 	go watchEndpoints(clientSet, wg, backend, shutdown)
+	go watchNodes(clientSet, wg, backend, shutdown)
 
 	wg.Wait()
 }
@@ -191,5 +193,13 @@ func watchEndpoints(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend 
 	endpointInformer := informer.Core().V1().Endpoints()
 	endpointInformer.Informer().AddEventHandler(backends.EndpointsEventWatcher{Backend: backend})
 	endpointInformer.Informer().Run(shutdown)
+	wg.Done()
+}
+
+func watchNodes(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
+	informer := informers.NewSharedInformerFactory(clientSet, 10*time.Minute)
+	nodeInformer := informer.Core().V1().Nodes()
+	nodeInformer.Informer().AddEventHandler(backends.NodesEventWatcher{Backend: backend})
+	nodeInformer.Informer().Run(shutdown)
 	wg.Done()
 }

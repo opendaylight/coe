@@ -16,4 +16,8 @@ type Coe interface {
 	AddEndpoints(*v1.Endpoints) error
 	UpdateEndpoints(old, new *v1.Endpoints) error
 	DeleteEndpoints(*v1.Endpoints) error
+
+	AddNode(*v1.Node) error
+	UpdateNode(old, new *v1.Node) error
+	DeleteNode(*v1.Node) error
 }

@@ -2,5 +2,7 @@ package: git.opendaylight.org/gerrit/p/coe.git/watcher
 import:
 - package: k8s.io/client-go
   version: ^v3.0.0
+  subpackages:
+  - pkg/api/v1
 - package: github.com/spf13/viper
 - package: github.com/spf13/cobra

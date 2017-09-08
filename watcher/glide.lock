@@ -1,6 +1,12 @@
-hash: 7d656aa0dd62a5be73c553e61782abb35a852cce00b158da6fd7dca9042432bb
-updated: 2017-08-28T17:46:35.761646843-07:00
+hash: 523436769223fadfe1f332fe1c6536e2a0439eb1a868bbb7f03dd1fa845b71c7
+updated: 2017-08-31T05:38:25.122006399-04:00
 imports:
+- name: git.opendaylight.org/gerrit/p/coe.git
+  version: c04f17119b91392ed8af15e641b4a76c9453b758
+  subpackages:
+  - watcher/backends
+  - watcher/backends/odl
+  - watcher/cmd
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
