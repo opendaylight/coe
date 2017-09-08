@@ -91,13 +91,8 @@ func NewOvsDriver(bridgeName string) *OvsDriver {
     err = ovsDriver.CreateBridge(ovsDriver.OvsBridgeName)
     if err != nil {
         log.Fatalf("Error creating bridge. Err: %v", err)
-        return ovsDriver
     }
 
-    err = ovsDriver.CreatePort(ovsDriver.OvsBridgeName, "internal", 0)
-    if err != nil {
-        log.Fatalf("Error creating port for bridge %s. Err: %v", ovsDriver.OvsBridgeName, err)
-    }
     return ovsDriver
 }
 
@@ -214,9 +209,9 @@ func (self *OvsDriver) ovsdbTransact(ops []libovsdb.Operation) error {
 
 // Create bridge to the ovs instance
 func (self *OvsDriver) CreateBridge(bridgeName string) error {
-    /*if self.IsBridgePresent(bridgeName) {
-        return errors.New(fmt.Sprintf("Bridge %s already exist", bridgeName))
-    }*/
+    if self.IsBridgePresent(bridgeName) {
+        return fmt.Errorf("Bridge %s already exist ", bridgeName)
+    }
 
     namedUuidStr := "odlbridge"
     protocols := []string{"OpenFlow10", "OpenFlow11", "OpenFlow12", "OpenFlow13"}
@@ -247,7 +242,8 @@ func (self *OvsDriver) CreateBridge(bridgeName string) error {
     }
 
     operations := []libovsdb.Operation{brOp, mutateOp}
-    return self.ovsdbTransact(operations)
+    self.ovsdbTransact(operations)
+    return self.CreatePort(bridgeName, "internal", 0)
 }
 
 // Delete a bridge from ovs instance
@@ -296,7 +292,7 @@ func (self *OvsDriver) DeleteBridge(bridgeName string) error {
 func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint) error {
     //check if port already created
     if self.IsPortNamePresent(intfName) {
-        return nil
+        return fmt.Errorf("port %s already exist ", intfName)
     }
     portUuidStr := intfName
     intfUuidStr := "int"+intfName
@@ -326,7 +322,6 @@ func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint
         port["vlan_mode"] = "trunk"
     }
 
-    fmt.Println("intfUUid = ", intfUuid)
     port["interfaces"], err = libovsdb.NewOvsSet(intfUuid)
     if err != nil {
         fmt.Println("error at interface uuid")
@@ -405,7 +400,6 @@ func (self *OvsDriver) DeletePort(intfName string) error {
 
 // Create vtep port on the OVS bridge
 func (self *OvsDriver) CreateVtep(intfName string, vtepRemoteIP string) error {
-    fmt.Println("Create vtep ..")
     portUuidStr := intfName
     intfUuidStr := fmt.Sprintf("Intf%s", intfName)
     portUuid := []libovsdb.UUID{{GoUUID: portUuidStr}}
@@ -439,7 +433,6 @@ func (self *OvsDriver) CreateVtep(intfName string, vtepRemoteIP string) error {
     port := make(map[string]interface{})
     port["name"] = intfName
     port["vlan_mode"] = "trunk"
-
     port["interfaces"], err = libovsdb.NewOvsSet(intfUuid)
     if err != nil {
         return err

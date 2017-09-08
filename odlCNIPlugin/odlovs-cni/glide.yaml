@@ -1,0 +1,11 @@
+package: .
+import:
+- package: github.com/Sirupsen/logrus
+- package: github.com/containernetworking/cni
+  subpackages:
+  - pkg/skel
+  - pkg/types
+  - pkg/types/current
+  - pkg/version
+- package: github.com/socketplane/libovsdb
+- package: github.com/vishvananda/netlink

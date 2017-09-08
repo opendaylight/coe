@@ -25,16 +25,14 @@
         "type":"odlovs-cni",
         "runtimeConfig":{
             "ovsConfig":{
-                "manager": "192.168.33.1",
-                "mgrPort": 6640,
-                "mgrActive": true,
-                "ovsBridge": "ovsbrk8s",
-                "controller": "192.168.33.1",
-                "ctlrPort": 6653,
-                "ctlrActive": true,
-                "vtepIps":[
-                    "192.168.33.11"
-                ]
+                "mgrPort":6640,
+                "mgrActive":true,
+                "manager":"192.168.33.1",
+                "ovsBridge":"ovsbrk8s",
+                "ctlrPort":6653,
+                "ctlrActive":true,
+                "controller":"192.168.33.1",
+                "vtepIps":["192.168.33.12", "192.168.33.13"]
             }
         }
     }]

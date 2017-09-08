@@ -11,9 +11,9 @@ package main
 import (
     "fmt"
     "time"
-    //"runtime"
     "github.com/containernetworking/cni/pkg/skel"
     "github.com/containernetworking/cni/pkg/version"
+    "github.com/containernetworking/cni/pkg/types"
     "github.com/vishvananda/netlink"
     "strings"
 )
@@ -22,7 +22,7 @@ import (
 func getBridgeByName(name string) (*netlink.Bridge, error) {
     link, err := netlink.LinkByName(name)
     if err != nil {
-        return link, fmt.Errorf("could not get bridge %q: %v", name, err)
+        return nil, fmt.Errorf("could not get bridge %q: %v", name, err)
     }
     bridge, ok := link.(*netlink.Bridge)
     if !ok {
@@ -32,15 +32,13 @@ func getBridgeByName(name string) (*netlink.Bridge, error) {
 }
 
 func cmdAdd(args *skel.CmdArgs) error {
-    //runtime.LockOSThread()
-    //defer runtime.UnlockOSThread()
     ovsConfig, err := parseOdlCniConf(args.StdinData)
     if err != nil {
         return fmt.Errorf("Error while parse conflist: %v", err)
     }
     bridgeName := ovsConfig.RuntimeConfig.OvsConfig.OvsBridge
-    fmt.Println("bridgeName is ", bridgeName)
-    // Create a Open vSwitch bridge
+
+    // Create Open vSwitch bridge
     ovsDriver := NewOvsDriver(bridgeName)
     time.Sleep(300 * time.Millisecond) // sleep to make sure the bridge link has been created
     ovsbrLink, err := netlink.LinkByName(bridgeName)
@@ -55,38 +53,39 @@ func cmdAdd(args *skel.CmdArgs) error {
 
     // Get linux bridge
     name := ovsConfig.PrevResult.Interfaces[0].Name
-    fmt.Println("linux bridge is ", name)
     br, err := getBridgeByName(name)
     if err != nil {
         return err
     }
 
     // set link master to ovs bridge
-    if err := netlink.LinkSetMaster(ovsbrLink, br); err != nil {
-        fmt.Println(err)
+    err = netlink.LinkSetMaster(ovsbrLink, br)
+    if err != nil {
         return fmt.Errorf("failed to LinkSetMaster %v", err)
     }
 
+    // We create the initial tunneling between the k8s cluster nodes
+    // however, for adding new node to the k8s cluster ODL should ask
+    // the odlcni agent to create new vtep with the node IP.
+    // We consider a full mesh between the cluster nodes.
     vtepIPs := ovsConfig.RuntimeConfig.OvsConfig.VtepIps
-    if len(vtepIPs) > 0 {
-        // Create VxLAN tunnelings
-        for i := 0; i < len(vtepIPs); i++ {
-
-            // Create interface name based on IP address in order to make sure it is unique
-            intfName := fmt.Sprintf("vtep%s", strings.Replace(vtepIPs[i], ".", "_", -1))
-
-            present, vtapName := ovsDriver.IsVtepPresent(vtepIPs[i])
+    length := len (vtepIPs)
+    for i := 0; i < length; i++ {
+        vtepIP := vtepIPs[i].String()
+        if vtepIP != "" {
+            // Create interface name based on IP address in order to make it readable & unique
+            intfName := fmt.Sprintf("vtep%s", strings.Replace(vtepIP, ".", "_", -1))
+            present, vtapName := ovsDriver.IsVtepPresent(vtepIP)
             if !present || (vtapName != intfName) {
-                err := ovsDriver.CreateVtep(intfName, vtepIPs[i])
+                err := ovsDriver.CreateVtep(intfName, vtepIP)
                 if err != nil {
                     return fmt.Errorf("Error creating VTEP port %s. Err: %v", intfName, err)
                 }
             }
-
         }
     }
 
-    return nil
+    return types.PrintResult(ovsConfig.PrevResult, ovsConfig.CNIVersion)
 }
 
 func cmdDel(args *skel.CmdArgs) error {

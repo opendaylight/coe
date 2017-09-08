@@ -11,6 +11,7 @@ package main
 import (
     "encoding/json"
     "fmt"
+    "net"
     "github.com/containernetworking/cni/pkg/types"
     "github.com/containernetworking/cni/pkg/types/current"
     "github.com/containernetworking/cni/pkg/version"
@@ -44,19 +45,17 @@ import (
 //        }
 //    },
 //    {
-//        "type":"odlcoe",
+//        "type":"odlovs-cni",
 //        "runtimeConfig":{
 //            "ovsConfig":{
 //                "manager": "{ODL_IP-Address}",
 //                "mgrPort": 6640,
 //                "mgrActive": true,
-//                "ovsBridge": "br-k8s",
+//                "ovsBridge": "ovsbrk8s",
 //                "controller": "{ODL_IP-Address}",
 //                "ctlrPort": 6653,
 //                "ctlrActive": true,
-//                "vtepIPs":[
-//                    "10.11.1.1","10.12.1.1"
-//                ]
+//                "vtepIps":["192.168.33.12", "192.168.33.13"]
 //            }
 //        }
 //    }
@@ -65,15 +64,14 @@ import (
 //`json:""`
 
 type OvsConfig struct {
-    CoeType string `json:"type"`
-    Manager string `json:"manager"`
     MgrPort int `json:"mgrPort"`
     MgrActive bool `json:"mgrActive"`
+    Manager net.IP `json:"manager"`
     OvsBridge string `json:"ovsBridge"`
-    Controller string `json:"controller"`
     CtlrPort int `json:"ctlrPort"`
-    CtlrActive bool `json: "ctlrActive"`
-    VtepIps []string `json:"vtepIps"`
+    CtlrActive bool `json:"ctlrActive"`
+    Controller net.IP `json:"controller"`
+    VtepIps []net.IP `json:"vtepIps"`
 }
 
 // The odl cni config for OVS instance
@@ -127,7 +125,7 @@ func parseOdlCniConf(stdin []byte) (OdlCni, error) {
     if odlCniConf.RuntimeConfig.OvsConfig.MgrPort == 0 {
         odlCniConf.RuntimeConfig.OvsConfig.MgrPort = DefaultManagerPort
     }
-    return odlCniConf, err
+    return odlCniConf, nil
 }
 
 // parse netconf list

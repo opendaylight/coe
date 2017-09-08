@@ -1,0 +1,40 @@
+{
+    "cniVersion": "0.3.0",
+    "name": "odl-cni",
+    "plugins": [{
+        "type": "bridge",
+        "bridge": "brk8s",
+        "isGateway": true,
+        "isDefaultGateway": true,
+        "forceAddress": false,
+        "ipMasq": true,
+        "mtu": 1400,
+        "hairpinMode": false,
+        "ipam": {
+            "type": "host-local",
+            "subnet": "10.11.0.0/16",
+            "rangeStart": "10.11.2.10",
+            "rangeEnd": "10.11.2.150",
+            "routes": [{
+                "dst": "0.0.0.0/0"
+            }],
+            "gateway": "10.11.2.1"
+        }
+    },
+        {
+            "type": "odlovs-cni",
+            "runtimeConfig": {
+                "ovsConfig": {
+                    "mgrPort":6640,
+                    "mgrActive":true,
+                    "manager":"192.168.33.1",
+                    "ovsBridge":"ovsbrk8s",
+                    "ctlrPort":6653,
+                    "ctlrActive":true,
+                    "controller":"192.168.33.1",
+                    "vtepIps":["192.168.33.11", "192.168.33.13"]
+                }
+            }
+        }
+    ]
+}

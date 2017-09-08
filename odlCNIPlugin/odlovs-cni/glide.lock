@@ -1,0 +1,36 @@
+hash: 4677a81512e38c2cd4346104ac3bf352f32a8b442a06cc3436fc7e99ce8412ff
+updated: 2017-09-12T16:07:14.559757881-04:00
+imports:
+- name: github.com/cenkalti/hub
+  version: 11382a9960d39b0ecda16fd01c424c11ff765a34
+- name: github.com/cenkalti/rpc2
+  version: c51a77e5f664b4a8a69bce4270d14204f94d51f9
+  subpackages:
+  - jsonrpc
+- name: github.com/containernetworking/cni
+  version: a2da8f8d7fd8e6dc25f336408a8ac86f050fbd88
+  subpackages:
+  - pkg/skel
+  - pkg/types
+  - pkg/types/020
+  - pkg/types/current
+  - pkg/version
+- name: github.com/Sirupsen/logrus
+  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
+- name: github.com/socketplane/libovsdb
+  version: 4de3618546deba09d8875d719752db32bd4652c0
+- name: github.com/vishvananda/netlink
+  version: 6e453822d85ef5721799774b654d4d02fed62afb
+  subpackages:
+  - nl
+- name: github.com/vishvananda/netns
+  version: 54f0e4339ce73702a0607f49922aaa1e749b418d
+- name: golang.org/x/crypto
+  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
+  subpackages:
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
+  subpackages:
+  - unix
+testImports: []
