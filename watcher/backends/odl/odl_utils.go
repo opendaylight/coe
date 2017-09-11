@@ -28,8 +28,6 @@ func createNodeStructure(node *v1.Node) []byte {
 	odlNodes[0] = Node{
 		UID: node.GetUID(),
 		HostName: node.GetName(),
-		ExternalIPAddress: generateIP(), //FIXME the IPAddress must be assigned from the node object spec & status
-		InternalIPAddress: generateIP(), //FIXME the IPAddress must be assigned from the node object spec & status
 	}
 	js, err := json.Marshal(odlNodes)
 	if  err != nil {
@@ -39,7 +37,6 @@ func createNodeStructure(node *v1.Node) []byte {
 }
 
 func createPodStructure(pod *v1.Pod) []byte {
-	ipAddress := generateIP()
 	interfaces := make([]Interface, 1)
 	interfaces[0] = Interface{
 		UID:            pod.GetUID(),

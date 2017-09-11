@@ -22,7 +22,7 @@ type Pod struct {
 
 type Interface struct {
 	UID            types.UID `json:"uid"`
-	IPAddress      net.IP    `json:"ip-address"`
+	IPAddress      net.IP    `json:"ip-address,omitempty"`
 	NetworkID      string    `json:"network-id"`
 	NetworkType    string    `json:"network-type"`
 	SegmentationID uint32    `json:"segmentation-id"`
@@ -31,6 +31,6 @@ type Interface struct {
 type Node struct {
 	UID types.UID `json:"uid"`
 	HostName string `json:"host-name"`
-	InternalIPAddress net.IP `json:"internal-ip-address"`
-	ExternalIPAddress net.IP `json:"external-ip-address"`
+	InternalIPAddress net.IP `json:"internal-ip-address,omitempty"`
+	ExternalIPAddress net.IP `json:"external-ip-address,omitempty"`
 }
