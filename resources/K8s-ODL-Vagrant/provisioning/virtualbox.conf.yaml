@@ -1,18 +1,14 @@
 ---
-public_network: "10.10.0.0/16"
-odl_ip: "192.168.1.12"
+odl_ip: "192.168.33.1"
 k8smaster:
-  name: "k8smasters.odl"
+  name: "k8sMasters"
   overlay-ip: "192.168.33.11"
-  public-ip: "10.10.0.11"
-  master-switch-subnet: "192.168.1.0/24"
+  public-ip: "192.168.50.11"
 k8sminion1:
-  name: "k8sminion1.odl"
+  name: "k8sMinion1"
   overlay-ip: "192.168.33.12"
-  public-ip: "10.10.0.12"
-  minion-switch-subnet: "192.168.2.0/24"
+  public-ip: "192.168.50.12"
 k8sminion2:
-  name: "k8sminion2.odl"
+  name: "k8sMinion2"
   overlay-ip: "192.168.33.13"
-  public-ip: "10.10.0.13"
-  minion-switch-subnet: "192.168.3.0/24"
+  public-ip: "192.168.50.13"

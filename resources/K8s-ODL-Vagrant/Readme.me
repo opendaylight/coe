@@ -1,0 +1,23 @@
+Steps:
+
+1- Run vagrant up
+2- ssh to the vm as vagrant ssh k8s-master
+3- for each vm run the following commands
+    - vagrant@k8smaster$ sudo mkdir -p /etc/cni/net.d/
+    - We assume you already succeed to build the odl-cni binary,
+        from your host use the following command to copy the odl-cni
+        binary to the vm $ scp odl-cni vagrant@192.168.33.11:~/
+        note: 192.168.33.11 is the ip of k8s-master
+    - In the VM execute vagrant@k8smaster$ sudo cp odl-cni /opt/cni/bin
+    - Also copy the conflist file to the /etc/cni/net.d/ directory
+        ex: vagrant@k8sMaster:~$ sudo cp /vagrant/exmple/master.odlovs-cni.conflist /etc/cni/net.d/
+    - start the Kubernetes cluster using the following command
+        sudo kubeadm init --apiserver-advertise-address=192.168.33.11
+        note: read the command output in order to use the kubectl command after
+        note: in the minion VMs you will use the join command instead ex:
+        vagrant@k8sMinion2:~$ sudo kubeadm join --token {given_token} 192.168.33.11:6443
+    - In order to create pods example use the following commands
+        vagrant@k8sMaster:~$ sudo kubectl create namespace sock-shop
+        vagrant@k8sMaster:~$ sudo kubectl apply -n sock-shop -f "https://github.com/microservices-demo/microservices-demo/blob/master/deploy/kubernetes/complete-demo.yaml?raw=true"
+    - check the pods status by execute
+        vagrant@k8sMaster:~$ sudo kubectl -n sock-shop get pods -o wide
