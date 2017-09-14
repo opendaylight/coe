@@ -10,92 +10,232 @@ package main
 
 import (
     "fmt"
-    "time"
+    "net"
+    "runtime"
     "github.com/containernetworking/cni/pkg/skel"
     "github.com/containernetworking/cni/pkg/version"
     "github.com/containernetworking/cni/pkg/types"
+    "github.com/containernetworking/cni/pkg/types/current"
     "github.com/vishvananda/netlink"
-    "strings"
+    "github.com/containernetworking/plugins/pkg/ipam"
+    "github.com/containernetworking/plugins/pkg/ip"
+    "github.com/containernetworking/plugins/pkg/ns"
+    "github.com/j-keck/arping"
+    "time"
+    "os"
+    //"strings"
 )
 
-// Get Linux bridge by name
-func getBridgeByName(name string) (*netlink.Bridge, error) {
-    link, err := netlink.LinkByName(name)
-    if err != nil {
-        return nil, fmt.Errorf("could not get bridge %q: %v", name, err)
-    }
-    bridge, ok := link.(*netlink.Bridge)
-    if !ok {
-        return bridge, fmt.Errorf("link %q already exists but is not a bridge", name)
-    }
-    return bridge, nil
-}
+const (
+    mtu = 1400
+    netmask = "/24"
+)
 
 func cmdAdd(args *skel.CmdArgs) error {
+    runtime.LockOSThread()
+    defer runtime.UnlockOSThread()
+
     ovsConfig, err := parseOdlCniConf(args.StdinData)
     if err != nil {
-        return fmt.Errorf("Error while parse conflist: %v", err)
+        return fmt.Errorf("Error while parse conf: %v", err)
     }
-    bridgeName := ovsConfig.RuntimeConfig.OvsConfig.OvsBridge
+    // Get Open vSwitch driver
+    ovsDriver := NewOvsDriver(ovsConfig.OvsBridge)
+    // sleep to make sure the bridge link has been created
+    time.Sleep(300 * time.Millisecond)
 
-    // Create Open vSwitch bridge
-    ovsDriver := NewOvsDriver(bridgeName)
-    time.Sleep(300 * time.Millisecond) // sleep to make sure the bridge link has been created
-    ovsbrLink, err := netlink.LinkByName(bridgeName)
+    // Skip this for now till we handle the ODL pipeline
+    /*if ovsConfig.CtlrActive {
+        ovsDriver.SetActiveController(ovsConfig.Controller.String(), ovsConfig.CtlrPort)
+    } else {
+        ovsDriver.SetPassiveController(ovsConfig.CtlrPort)
+    }
+    if ovsConfig.MgrActive {
+        ovsDriver.SetActiveManager(ovsConfig.Manager.String(), ovsConfig.MgrPort)
+    } else {
+        ovsDriver.SetPassiveManager(ovsConfig.MgrPort)
+    }*/
+
+    // Get Container network namespace
+    contNetNS, err := ns.GetNS(args.Netns)
     if err != nil {
-        return fmt.Errorf("could not lookup %q bridge: %v", bridgeName, err)
+        return fmt.Errorf("Error open netns %q: %v", args.Netns, err)
     }
-    // enables the link device
-    err = netlink.LinkSetUp(ovsbrLink)
-    if  err != nil {
-        return fmt.Errorf("Error while enabling ovs bridge link %v", err)
-    }
+    defer contNetNS.Close()
 
-    // Get linux bridge
-    name := ovsConfig.PrevResult.Interfaces[0].Name
-    br, err := getBridgeByName(name)
+    // Setup the contNetNS tap and set container interface
+    contIface := &current.Interface{}
+    hostIface := &current.Interface{}
+
+    err = contNetNS.Do(func(hostNS ns.NetNS) error {
+        // create the veth pair in the container and move host end into host netns
+        hostVeth, containerVeth, err := ip.SetupVeth(args.IfName, mtu, hostNS)
+        if err != nil {
+            return fmt.Errorf("Error Setup Veth, %v", err)
+        }
+        contIface.Name = containerVeth.Name
+        contIface.Mac = containerVeth.HardwareAddr.String()
+        contIface.Sandbox = contNetNS.Path()
+        hostIface.Name = hostVeth.Name
+        hostIface.Mac = hostVeth.HardwareAddr.String()
+        return nil
+    })
     if err != nil {
-        return err
+        return fmt.Errorf("Error while setup the container NetNS, %v", err)
     }
 
-    // set link master to ovs bridge
-    err = netlink.LinkSetMaster(ovsbrLink, br)
+    err = ovsDriver.CreatePort(hostIface.Name, "", 0, args.ContainerID)
     if err != nil {
-        return fmt.Errorf("failed to LinkSetMaster %v", err)
+        return fmt.Errorf("Error adding created pods veth to ovs bridge %v", err)
     }
 
-    // We create the initial tunneling between the k8s cluster nodes
-    // however, for adding new node to the k8s cluster ODL should ask
-    // the odlcni agent to create new vtep with the node IP.
-    // We consider a full mesh between the cluster nodes.
-    vtepIPs := ovsConfig.RuntimeConfig.OvsConfig.VtepIps
-    length := len (vtepIPs)
-    for i := 0; i < length; i++ {
-        vtepIP := vtepIPs[i].String()
-        if vtepIP != "" {
-            // Create interface name based on IP address in order to make it readable & unique
-            intfName := fmt.Sprintf("vtep%s", strings.Replace(vtepIP, ".", "_", -1))
-            present, vtapName := ovsDriver.IsVtepPresent(vtepIP)
-            if !present || (vtapName != intfName) {
-                err := ovsDriver.CreateVtep(intfName, vtepIP)
-                if err != nil {
-                    return fmt.Errorf("Error creating VTEP port %s. Err: %v", intfName, err)
-                }
+    // We use the default CNI IPAM for now till we decide how will use ODL dhcp service
+    // Run the IPAM plugin and get back the config to apply
+    r, err := ipam.ExecAdd(ovsConfig.IPAM.Type, args.StdinData)
+    if err != nil {
+        return fmt.Errorf("Error execAdd IPAM plugin, %v", err)
+    }
+    // Convert whatever the IPAM result into the current Result type
+    result, err := current.NewResultFromResult(r)
+    if err != nil {
+        return fmt.Errorf("Error convert the IPAM result into current Result, %v", err)
+    }
+    if len(result.IPs) == 0 {
+        return fmt.Errorf("Error IPAM plugin returned missing IP config")
+    }
+
+    result.Interfaces = []*current.Interface{hostIface, contIface}
+
+    // Configure the container hardware and IP addresses
+    if err := contNetNS.Do(func(_ ns.NetNS) error {
+        contIface, err := net.InterfaceByName(args.IfName)
+        if err != nil {
+            return fmt.Errorf("Error getting the conatiner ifName, %v", err)
+        }
+
+        // Add the IP to the interface
+        if err := ConfigureIface(contIface.Name, result); err != nil {
+            return fmt.Errorf("Error Adding IpAddress to ifName, %v", err)
+        }
+
+        // Just for now send arp to all other ports. Will delete this once ctlr push
+        // flow rules to the bridge.
+        for _, ipc := range result.IPs {
+            if ipc.Version == "4" {
+                _ = arping.GratuitousArpOverIface(ipc.Address.IP, *contIface)
             }
         }
+        return nil
+    }); err != nil {
+        return fmt.Errorf("Error configure container Hardware And IP Addresses, %v", err)
     }
 
-    return types.PrintResult(ovsConfig.PrevResult, ovsConfig.CNIVersion)
+    // Add the public interface to ovs bridge
+    // FIXME: Skip this for the now.
+    //if ovsConfig.ExternalIntf != "" {
+    //    extLink, _ := netlink.LinkByName(ovsConfig.ExternalIntf)
+    //    netlink.LinkSetDown(extLink)
+    //    err := ovsDriver.CreatePort(ovsConfig.ExternalIntf, "", 0, "")
+    //    if err != nil {
+    //        return fmt.Errorf("Error Adding external net interface %v", err)
+    //    }
+    //    cidr := ovsConfig.ExternalIp.String()
+    //    if strings.IndexByte(cidr, '/') < 0 {
+    //        cidr = cidr + netmask
+    //    }
+    //    ipNet, err := netlink.ParseIPNet(cidr)
+    //    if err != nil {
+    //        return fmt.Errorf("Error parsing external IPAddress %v", err)
+    //    }
+    //    addr := &netlink.Addr{
+    //        IPNet: ipNet,
+    //        Label: "",
+    //        Flags: 0,
+    //        Scope: 0,
+    //    }
+    //    link, _ := netlink.LinkByName(ovsConfig.OvsBridge)
+    //    netlink.AddrAdd(link, addr)
+    //    netlink.LinkSetUp(link)
+    //}
+    return types.PrintResult(result, ovsConfig.CNIVersion)
 }
 
 func cmdDel(args *skel.CmdArgs) error {
-    _, err := parseOdlCniConf(args.StdinData)
+    ovsConfig, err := parseOdlCniConf(args.StdinData)
     if err != nil {
-        return fmt.Errorf("Error while parse conflist: %v", err)
+        return fmt.Errorf("Error while parse conf: %v", err)
     }
-    return nil
+    if err := ipam.ExecDel(ovsConfig.IPAM.Type, args.StdinData); err != nil {
+        return err
+    }
+    // Get Open vSwitch driver
+    ovsDriver := NewOvsDriver(ovsConfig.OvsBridge)
+    prtName := ovsDriver.GetPortNameByExternalId(args.ContainerID)
+    return ovsDriver.DeletePortByName(prtName)
 }
 
 func main() {
     skel.PluginMain(cmdAdd, cmdDel, version.All)
+}
+
+// ConfigureIface takes the result of IPAM plugin and
+// applies to the ifName interface
+func ConfigureIface(ifName string, res *current.Result) error {
+    if len(res.Interfaces) == 0 {
+        return fmt.Errorf("no interfaces to configure")
+    }
+
+    link, err := netlink.LinkByName(ifName)
+    if err != nil {
+        return fmt.Errorf("failed to lookup %q: %v", ifName, err)
+    }
+
+    if err := netlink.LinkSetUp(link); err != nil {
+        return fmt.Errorf("failed to set %q UP: %v", ifName, err)
+    }
+
+    var v4gw, v6gw net.IP
+    for _, ipc := range res.IPs {
+        if ipc.Interface == nil {
+            // set the IPConfig to the container Intf
+            ipc.Interface = current.Int(1)
+        }
+        intIdx := *ipc.Interface
+        if intIdx < 0 || intIdx >= len(res.Interfaces) || res.Interfaces[intIdx].Name != ifName {
+            return fmt.Errorf("failed to add IP addr %v to %q: invalid interface index", ipc, ifName)
+        }
+
+        addr := &netlink.Addr{IPNet: &ipc.Address, Label: ""}
+        if err = netlink.AddrAdd(link, addr); err != nil {
+            return fmt.Errorf("failed to add IP addr %v", err)
+        }
+
+        gwIsV4 := ipc.Gateway.To4() != nil
+        if gwIsV4 && v4gw == nil {
+            v4gw = ipc.Gateway
+        } else if !gwIsV4 && v6gw == nil {
+            v6gw = ipc.Gateway
+        }
+    }
+
+    ip.SettleAddresses(ifName, 10)
+
+    // Add the gateway route
+    for _, r := range res.Routes {
+        routeIsV4 := r.Dst.IP.To4() != nil
+        gw := r.GW
+        if gw == nil {
+            if routeIsV4 && v4gw != nil {
+                gw = v4gw
+            } else if !routeIsV4 && v6gw != nil {
+                gw = v6gw
+            }
+        }
+        if err = ip.AddRoute(&r.Dst, gw, link); err != nil {
+            if !os.IsExist(err) {
+                return fmt.Errorf("failed to add route %v", err)
+            }
+        }
+    }
+    return nil
 }
