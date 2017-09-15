@@ -3,7 +3,6 @@ package backends
 import (
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/tools/cache"
-	//"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
 type Watchers struct {

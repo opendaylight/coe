@@ -3,21 +3,20 @@ package odl
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
-
-	"k8s.io/client-go/pkg/api/v1"
-
-	"fmt"
-	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
-
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
 	"os"
 	"os/signal"
 	"sync"
 	"time"
+
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api/v1"
+
+	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
 func New(url, username, password string) backends.Coe {
@@ -114,35 +113,35 @@ func (b backend) doRequest(method, url string, reader io.Reader) error {
 }
 
 func (b backend) putPod(uid string, js []byte) error {
-	return b.doRequest(http.MethodPut, b.urlPrefix + PodsUrl + uid, bytes.NewBuffer(js))
+	return b.doRequest(http.MethodPut, b.urlPrefix+PodsUrl+uid, bytes.NewBuffer(js))
 }
 
 func (b backend) deletePod(uid string) error {
-	return b.doRequest(http.MethodDelete, b.urlPrefix + PodsUrl + uid, nil)
+	return b.doRequest(http.MethodDelete, b.urlPrefix+PodsUrl+uid, nil)
 }
 
 func (b backend) putNode(uid string, js []byte) error {
-	return b.doRequest(http.MethodPut, b.urlPrefix + NodesUrl + uid, bytes.NewBuffer(js))
+	return b.doRequest(http.MethodPut, b.urlPrefix+NodesUrl+uid, bytes.NewBuffer(js))
 }
 
 func (b backend) deleteNode(uid string) error {
-	return b.doRequest(http.MethodDelete, b.urlPrefix + NodesUrl + uid, nil)
+	return b.doRequest(http.MethodDelete, b.urlPrefix+NodesUrl+uid, nil)
 }
 
 func (b backend) putService(uid string, js []byte) error {
-	return b.doRequest(http.MethodPut, b.urlPrefix + ServicesUrl + uid, bytes.NewBuffer(js))
+	return b.doRequest(http.MethodPut, b.urlPrefix+ServicesUrl+uid, bytes.NewBuffer(js))
 }
 
 func (b backend) deleteService(uid string) error {
-	return b.doRequest(http.MethodDelete, b.urlPrefix + ServicesUrl + uid, nil)
+	return b.doRequest(http.MethodDelete, b.urlPrefix+ServicesUrl+uid, nil)
 }
 
 func (b backend) putEndpoints(uid string, js []byte) error {
-	return b.doRequest(http.MethodPut, b.urlPrefix + EndPointsUrl + uid, bytes.NewBuffer(js))
+	return b.doRequest(http.MethodPut, b.urlPrefix+EndPointsUrl+uid, bytes.NewBuffer(js))
 }
 
 func (b backend) deleteEndpoints(uid string) error {
-	return b.doRequest(http.MethodDelete, b.urlPrefix + EndPointsUrl + uid, nil)
+	return b.doRequest(http.MethodDelete, b.urlPrefix+EndPointsUrl+uid, nil)
 }
 
 func Watch(clientSet kubernetes.Interface, backend backends.Coe) {

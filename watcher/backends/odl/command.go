@@ -1,12 +1,13 @@
 package odl
 
 import (
-	commands "git.opendaylight.org/gerrit/p/coe.git/watcher/cmd"
-	"github.com/spf13/cobra"
 	"log"
-	"github.com/spf13/viper"
-)
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	commands "git.opendaylight.org/gerrit/p/coe.git/watcher/cmd"
+)
 
 var OdlCmd = &cobra.Command{
 	Use:   "odl",

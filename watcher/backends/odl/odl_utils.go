@@ -16,20 +16,20 @@ import (
 )
 
 const (
-	PodsUrl = "/restconf/config/pod:coe/pods/"
-	NodesUrl = "/restconf/config/k8s-node:k8s-nodes-info/k8s-nodes/"
-	ServicesUrl = "/restconf/config/pod:coe/pods/" //FIXME not the right url
+	PodsUrl      = "/restconf/config/pod:coe/pods/"
+	NodesUrl     = "/restconf/config/k8s-node:k8s-nodes-info/k8s-nodes/"
+	ServicesUrl  = "/restconf/config/pod:coe/pods/" //FIXME not the right url
 	EndPointsUrl = "/restconf/config/pod:coe/pods/" //FIXME not the right url
 )
 
 func createNodeStructure(node *v1.Node) []byte {
 	odlNodes := make([]Node, 1)
 	odlNodes[0] = Node{
-		UID: node.GetUID(),
+		UID:      node.GetUID(),
 		HostName: node.GetName(),
 	}
 	js, err := json.Marshal(odlNodes)
-	if  err != nil {
+	if err != nil {
 		fmt.Println("Error while formating k8s node object", err)
 	}
 	return js

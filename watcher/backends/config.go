@@ -1,8 +1,10 @@
 package backends
 
-import "k8s.io/client-go/kubernetes"
+import (
+	"k8s.io/client-go/kubernetes"
+)
 
 type Config struct {
-	Backend Coe
+	Backend   Coe
 	Clientset *kubernetes.Clientset
 }
