@@ -8,11 +8,10 @@ import (
 	"net/http"
 
 	"k8s.io/client-go/pkg/api/v1"
-	//"src/k8s.io/client-go/pkg/api/v1"
 
 	"fmt"
-	//"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
-	"../../backends" // same project packages should be refereed by directory
+	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
+
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"os"
@@ -63,7 +62,7 @@ func (b backend) UpdateNode(old, new *v1.Node) error {
 }
 
 func (b backend) DeleteNode(node *v1.Node) error {
-	return b.deleteNode(node.GetUID())
+	return b.deleteNode(string(node.GetUID()))
 }
 
 func (b backend) AddService(service *v1.Service) error {

@@ -10,10 +10,9 @@ package odl
 
 import (
 	"encoding/json"
-	"k8s.io/client-go/pkg/api/v1"
-	//"src/k8s.io/client-go/pkg/api/v1"
-	//"k8s.io/apimachinery/pkg/util/uuid"
 	"fmt"
+
+	"k8s.io/client-go/pkg/api/v1"
 )
 
 const (
@@ -41,7 +40,6 @@ func createPodStructure(pod *v1.Pod) []byte {
 	interfaces[0] = Interface{
 		UID:            pod.GetUID(),
 		NetworkID:      "00000000-0000-0000-0000-000000000000",
-		IPAddress:      ipAddress,
 		NetworkType:    "FLAT",
 		SegmentationID: 0,
 	}

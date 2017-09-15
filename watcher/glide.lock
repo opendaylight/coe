@@ -1,12 +1,6 @@
-hash: 523436769223fadfe1f332fe1c6536e2a0439eb1a868bbb7f03dd1fa845b71c7
-updated: 2017-09-11T12:38:42.003405689-07:00
+hash: 7d656aa0dd62a5be73c553e61782abb35a852cce00b158da6fd7dca9042432bb
+updated: 2017-09-15T12:43:59.478264546-07:00
 imports:
-- name: git.opendaylight.org/gerrit/p/coe.git
-  version: c04f17119b91392ed8af15e641b4a76c9453b758
-  subpackages:
-  - watcher/backends
-  - watcher/backends/odl
-  - watcher/cmd
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -147,6 +141,7 @@ imports:
 - name: k8s.io/apimachinery
   version: 85ace5365f33b16fc735c866a12e3c765b9700f2
   subpackages:
+  - pkg/api/equality
   - pkg/api/errors
   - pkg/api/meta
   - pkg/api/resource
@@ -173,18 +168,22 @@ imports:
   - pkg/util/diff
   - pkg/util/errors
   - pkg/util/framer
+  - pkg/util/httpstream
   - pkg/util/intstr
   - pkg/util/json
+  - pkg/util/mergepatch
   - pkg/util/net
   - pkg/util/rand
   - pkg/util/runtime
   - pkg/util/sets
+  - pkg/util/strategicpatch
   - pkg/util/validation
   - pkg/util/validation/field
   - pkg/util/wait
   - pkg/util/yaml
   - pkg/version
   - pkg/watch
+  - third_party/forked/golang/json
   - third_party/forked/golang/reflect
 - name: k8s.io/client-go
   version: 21300e3e11c918b8e6a70fb7293b310683d6c046
