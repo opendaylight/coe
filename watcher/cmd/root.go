@@ -16,15 +16,16 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
-	"github.com/fsnotify/fsnotify"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"github.com/mitchellh/go-homedir"
-	"log"
+
 	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
@@ -75,11 +76,11 @@ func initConfig() {
 	if cfgFile != "" { // enable ability to specify config file via flag
 		viper.SetConfigFile(cfgFile)
 	} else {
-		viper.SetConfigName("coe")      // name of config file (without extension)
+		viper.SetConfigName("coe") // name of config file (without extension)
 		viper.AddConfigPath(".")
 		viper.AddConfigPath("$HOME")    // adding home directory as first search path
 		viper.AddConfigPath("/etc/coe") // adding home directory as first search path
-		viper.AutomaticEnv() // read in environment variables that match
+		viper.AutomaticEnv()            // read in environment variables that match
 	}
 
 	// If a config file is found, read it in.
@@ -87,20 +88,17 @@ func initConfig() {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 
-	cfg := &CoeConfig{}
-	viper.Unmarshal(cfg)
-
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("Config file changed", e)
-		viper.Unmarshal(cfg)
-	})
-
-	if cfg.KubeConfigFile == "" {
-		cfg.KubeConfigFile = "~/.kube/config"
+	var err error
+	kubeConfigFile := viper.GetString("kube.config")
+	if kubeConfigFile == "" {
+		kubeConfigFile, err = RootCmd.Flags().GetString("kubeconfig")
+		if err != nil {
+			kubeConfigFile = "~/.kube/config"
+		}
 	}
 
-	kubeConfigFile, err := homedir.Expand(cfg.KubeConfigFile)
+	kubeConfigFile, err = homedir.Expand(kubeConfigFile)
+	log.Println("Kubeconfig: ", kubeConfigFile)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -119,11 +117,7 @@ func initConfig() {
 
 }
 
-type CoeConfig struct{
-	KubeConfigFile string
-}
-
 type CoeState struct {
 	ClientSet kubernetes.Clientset
-	Backend backends.Coe
+	Backend   backends.Coe
 }
