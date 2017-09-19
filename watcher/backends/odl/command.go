@@ -52,6 +52,5 @@ func init() {
 	OdlCmd.Flags().String("host", "http://127.0.0.1:8181", "ODL Server to connect to")
 	OdlCmd.Flags().String("username", "admin", "ODL Username")
 	OdlCmd.Flags().String("password", "admin", "ODL Password")
-
 	commands.RootCmd.AddCommand(OdlCmd)
 }

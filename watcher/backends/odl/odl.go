@@ -19,6 +19,16 @@ import (
 	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
+const (
+	syncTime = 10*time.Minute
+)
+type backend struct {
+	client    *http.Client
+	urlPrefix string
+	username  string
+	password  string
+}
+
 func New(url, username, password string) backends.Coe {
 	return backend{
 		client:    &http.Client{},
@@ -26,13 +36,6 @@ func New(url, username, password string) backends.Coe {
 		password:  password,
 		urlPrefix: url,
 	}
-}
-
-type backend struct {
-	client    *http.Client
-	urlPrefix string
-	username  string
-	password  string
 }
 
 func (b backend) AddPod(pod *v1.Pod) error {
@@ -163,15 +166,15 @@ func Watch(clientSet kubernetes.Interface, backend backends.Coe) {
 	}()
 
 	go watchPods(clientSet, wg, backend, shutdown)
+	go watchNodes(clientSet, wg, backend, shutdown)
 	go watchServices(clientSet, wg, backend, shutdown)
 	go watchEndpoints(clientSet, wg, backend, shutdown)
-	go watchNodes(clientSet, wg, backend, shutdown)
 
 	wg.Wait()
 }
 
 func watchPods(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
-	informer := informers.NewSharedInformerFactory(clientSet, 10*time.Minute)
+	informer := informers.NewSharedInformerFactory(clientSet, syncTime)
 	podInformer := informer.Core().V1().Pods()
 	podInformer.Informer().AddEventHandler(backends.PodEventWatcher{Backend: backend})
 	podInformer.Informer().Run(shutdown)
@@ -179,7 +182,7 @@ func watchPods(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backe
 }
 
 func watchServices(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
-	informer := informers.NewSharedInformerFactory(clientSet, 10*time.Minute)
+	informer := informers.NewSharedInformerFactory(clientSet, syncTime)
 	serviceInformer := informer.Core().V1().Services()
 	serviceInformer.Informer().AddEventHandler(backends.ServiceEventWatcher{Backend: backend})
 	serviceInformer.Informer().Run(shutdown)
@@ -187,7 +190,7 @@ func watchServices(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend b
 }
 
 func watchEndpoints(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
-	informer := informers.NewSharedInformerFactory(clientSet, 10*time.Minute)
+	informer := informers.NewSharedInformerFactory(clientSet, syncTime)
 	endpointInformer := informer.Core().V1().Endpoints()
 	endpointInformer.Informer().AddEventHandler(backends.EndpointsEventWatcher{Backend: backend})
 	endpointInformer.Informer().Run(shutdown)
@@ -195,7 +198,7 @@ func watchEndpoints(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend 
 }
 
 func watchNodes(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
-	informer := informers.NewSharedInformerFactory(clientSet, 10*time.Minute)
+	informer := informers.NewSharedInformerFactory(clientSet, syncTime)
 	nodeInformer := informer.Core().V1().Nodes()
 	nodeInformer.Informer().AddEventHandler(backends.NodesEventWatcher{Backend: backend})
 	nodeInformer.Informer().Run(shutdown)

@@ -29,8 +29,8 @@ type Interface struct {
 }
 
 type Node struct {
-	UID               types.UID `json:"uid"`
-	HostName          string    `json:"host-name"`
-	InternalIPAddress net.IP    `json:"internal-ip-address,omitempty"`
-	ExternalIPAddress net.IP    `json:"external-ip-address,omitempty"`
+	UID               types.UID `json:"k8s-node:uid"`
+	HostName          string    `json:"k8s-node:host-name"`
+	InternalIPAddress net.IP    `json:"k8s-node:internal-ip-address,omitempty"`
+	ExternalIPAddress net.IP    `json:"k8s-node:external-ip-address,omitempty"`
 }
