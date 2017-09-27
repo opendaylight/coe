@@ -18,50 +18,41 @@ import (
 )
 
 //Example of the expected json
-//`{
-//    "name":"odl-cni",
+//{
 //    "cniVersion":"0.3.0",
-//    "plugins":[
-//    {
-//        "type":"bridge",
-//        "bridge":"brk8s",
-//        "isGateway":true,
-//        "isDefaultGateway":true,
-//        "forceAddress":false,
-//        "ipMasq":true,
-//        "mtu":1400,
-//        "hairpinMode":false,
-//        "ipam":{
-//          "type":"host-local",
-//          "subnet":"10.11.0.0/16",
-//          "rangeStart":"10.11.1.10",
-//          "rangeEnd":"10.11.1.150",
-//          "routes":[
-//            {
-//              "dst":"0.0.0.0/0"
-//            }
-//          ],
-//          "gateway":"10.11.1.1"
-//        }
-//    },
-//    {
-//        "type":"odlovs-cni",
-//        "runtimeConfig":{
-//            "ovsConfig":{
-//                "manager": "{ODL_IP-Address}",
-//                "mgrPort": 6640,
-//                "mgrActive": true,
-//                "ovsBridge": "ovsbrk8s",
-//                "controller": "{ODL_IP-Address}",
-//                "ctlrPort": 6653,
-//                "ctlrActive": true,
-//                "vtepIps":["192.168.33.12", "192.168.33.13"]
-//            }
-//        }
+//    "name":"odl-cni",
+//    "type":"odlovs-cni",
+//    "mgrPort":6640,
+//    "mgrActive":true,
+//    "manager":"192.168.33.1",
+//    "ovsBridge":"ovsbrk8s",
+//    "ctlrPort":6653,
+//    "ctlrActive":true,
+//    "controller":"192.168.33.1",
+//    "externalIntf":"enp0s9",
+//    "externalIp":"192.168.50.11",
+//    "ipam":{
+//        "type":"host-local",
+//        "subnet":"10.11.1.0/24",
+//        "routes":[{
+//        "dst":"0.0.0.0/0"
+//        }],
+//        "gateway":"10.11.1.1"
 //    }
-//    ]
-//}`
-//`json:""`
+//}
+
+type OdlCniConf struct {
+    types.NetConf
+    MgrPort int `json:"mgrPort"`
+    MgrActive bool `json:"mgrActive"`
+    Manager net.IP `json:"manager"`
+    OvsBridge string `json:"ovsBridge"`
+    CtlrPort int `json:"ctlrPort"`
+    CtlrActive bool `json:"ctlrActive"`
+    Controller net.IP `json:"controller"`
+    ExternalIntf string `json:"externalIntf"`
+    ExternalIp net.IP `json:"externalIp"`
+}
 
 type OvsConfig struct {
     MgrPort int `json:"mgrPort"`
@@ -94,7 +85,27 @@ type OdlCniConfList struct {
 }
 
 // parse odlcni conf
-func parseOdlCniConf(stdin []byte) (OdlCni, error) {
+func parseOdlCniConf(stdin []byte) (OdlCniConf, error) {
+    odlCniConf := OdlCniConf{}
+    err := json.Unmarshal(stdin, &odlCniConf)
+    if err != nil {
+        fmt.Errorf("failed to parse odlcni configurations: %v", err)
+    }
+
+    if odlCniConf.OvsBridge == "" {
+        odlCniConf.OvsBridge = DefaultBridgeName
+    }
+    if odlCniConf.CtlrPort == 0 {
+        odlCniConf.CtlrPort = DefaultControllerPort
+    }
+    if odlCniConf.MgrPort == 0 {
+        odlCniConf.MgrPort = DefaultManagerPort
+    }
+    return odlCniConf, nil
+}
+
+// parse odlcni
+func parseOdlCni(stdin []byte) (OdlCni, error) {
     odlCniConf := OdlCni{}
     err := json.Unmarshal(stdin, &odlCniConf)
     if err != nil {

@@ -1,5 +1,5 @@
 hash: 4677a81512e38c2cd4346104ac3bf352f32a8b442a06cc3436fc7e99ce8412ff
-updated: 2017-09-12T16:07:14.559757881-04:00
+updated: 2017-09-14T17:52:22.049317072-04:00
 imports:
 - name: github.com/cenkalti/hub
   version: 11382a9960d39b0ecda16fd01c424c11ff765a34
@@ -10,11 +10,25 @@ imports:
 - name: github.com/containernetworking/cni
   version: a2da8f8d7fd8e6dc25f336408a8ac86f050fbd88
   subpackages:
+  - pkg/invoke
   - pkg/skel
   - pkg/types
   - pkg/types/020
   - pkg/types/current
   - pkg/version
+- name: github.com/containernetworking/plugins
+  version: e256564546e8d1ca8a36911f8445c11929043221
+  subpackages:
+  - pkg/ip
+  - pkg/ipam
+  - pkg/ns
+  - pkg/utils/hwaddr
+- name: github.com/coreos/go-iptables
+  version: 259c8e6a4275d497442c721fa52204d7a58bde8b
+  subpackages:
+  - iptables
+- name: github.com/j-keck/arping
+  version: 2cf9dc699c5640a7e2c81403a44127bf28033600
 - name: github.com/Sirupsen/logrus
   version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/socketplane/libovsdb
