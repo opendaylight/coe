@@ -23,7 +23,7 @@ import (
     "github.com/j-keck/arping"
     "time"
     "os"
-    //"strings"
+    "strings"
 )
 
 const (
@@ -44,13 +44,12 @@ func cmdAdd(args *skel.CmdArgs) error {
     // sleep to make sure the bridge link has been created
     time.Sleep(300 * time.Millisecond)
 
-    // Skip this for now till we handle the ODL pipeline
-    /*if ovsConfig.CtlrActive {
+    if ovsConfig.CtlrActive {
         ovsDriver.SetActiveController(ovsConfig.Controller.String(), ovsConfig.CtlrPort)
     } else {
         ovsDriver.SetPassiveController(ovsConfig.CtlrPort)
     }
-    if ovsConfig.MgrActive {
+    /*if ovsConfig.MgrActive {
         ovsDriver.SetActiveManager(ovsConfig.Manager.String(), ovsConfig.MgrPort)
     } else {
         ovsDriver.SetPassiveManager(ovsConfig.MgrPort)
@@ -131,32 +130,33 @@ func cmdAdd(args *skel.CmdArgs) error {
     }
 
     // Add the public interface to ovs bridge
-    // FIXME: Skip this for the now.
-    //if ovsConfig.ExternalIntf != "" {
-    //    extLink, _ := netlink.LinkByName(ovsConfig.ExternalIntf)
-    //    netlink.LinkSetDown(extLink)
-    //    err := ovsDriver.CreatePort(ovsConfig.ExternalIntf, "", 0, "")
-    //    if err != nil {
-    //        return fmt.Errorf("Error Adding external net interface %v", err)
-    //    }
-    //    cidr := ovsConfig.ExternalIp.String()
-    //    if strings.IndexByte(cidr, '/') < 0 {
-    //        cidr = cidr + netmask
-    //    }
-    //    ipNet, err := netlink.ParseIPNet(cidr)
-    //    if err != nil {
-    //        return fmt.Errorf("Error parsing external IPAddress %v", err)
-    //    }
-    //    addr := &netlink.Addr{
-    //        IPNet: ipNet,
-    //        Label: "",
-    //        Flags: 0,
-    //        Scope: 0,
-    //    }
-    //    link, _ := netlink.LinkByName(ovsConfig.OvsBridge)
-    //    netlink.AddrAdd(link, addr)
-    //    netlink.LinkSetUp(link)
-    //}
+    if ovsConfig.ExternalIntf != "" {
+        err := ovsDriver.CreatePort(ovsConfig.ExternalIntf, "", 0, "")
+        if err != nil {
+            return fmt.Errorf("Error Adding external net interface %v", err)
+        }
+     }
+    // Set the default gw to the ovsbrk8s intf
+    link, _ := netlink.LinkByName(ovsConfig.OvsBridge)
+    if (link.Attrs().OperState != netlink.OperUp) {
+        cidr := result.IPs[0].Gateway.String()
+        if strings.IndexByte(cidr, '/') < 0 {
+            cidr = cidr + netmask
+        }
+        ipNet, err := netlink.ParseIPNet(cidr)
+        if err != nil {
+            return fmt.Errorf("Error parsing external IPAddress %v", err)
+        }
+        addr := &netlink.Addr{
+            IPNet: ipNet,
+            Label: "",
+            Flags: 0,
+            Scope: 0,
+        }
+        netlink.AddrAdd(link, addr)
+        netlink.LinkSetUp(link)
+    }
+
     return types.PrintResult(result, ovsConfig.CNIVersion)
 }
 
