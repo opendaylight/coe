@@ -24,9 +24,6 @@ module service {
 
     contact "Prem Sankar G <prem.sankar.g@ericsson.com";
 
-  /*
-   * Configuration data nodes
-   */
     container service-information {
         description
             "Container Configuration Parameters. ";
@@ -45,13 +42,74 @@ module service {
             leaf cluster-ip-address {
                 type inet:ip-address;
                 description
-                    "front-end IP Address for all the pods tagged under the service. ";
+                    "front-end IP Address for all the pods tagged under the service.";
+            }
+
+            leaf network-NS {
+                type string;
+                description "Network namespace defines the space for the service. The empty namespace
+                    is equivalent to the default namespace";
+            }
+
+            leaf-list external-ip-address {
+                type inet:ip-address;
+                description
+                    "list of external IP Addresses that route the traffic into and from the service.";
+            }
+
+            // need to discuss this
+//            leaf-list selectors {
+//                type string;
+//            }
+
+            leaf load-balancer-IP {
+                type inet:ip-address;
+                description
+                    "Only applies to Service Type: LoadBalancer. A loadBalancer will get created with
+                    the IP specified in this field.";
+            }
+
+            leaf-list ingress-ip-address {
+                type inet:ip-address;
+                description
+                    "list of ingress IP Addresses that assigned to the service.";
+            }
+
+            list service-ports {
+                uses service-ports-info;
             }
 
             leaf-list endpoints {
                 type    yang:uuid;
-                description "UUID representing the end-point(pod). ";
+                description "UUID representing the end-point(pod).";
             }
+
+        }
+    }
+
+    grouping service-ports-info {
+        description "service ports info";
+
+        leaf name {
+            type string;
+            description "The name of this port within the service. This maps to
+                the 'Name' field in EndpointPort objects.";
+        }
+
+        leaf port {
+            type int32;
+            description "The port that will be exposed by this service.";
+        }
+
+        leaf target-port {
+            type string;
+            description "Number or name of the port to access on the pods targeted by the service.  ";
+        }
+
+        leaf node-port {
+            type int32;
+            description "The port on each node on which this service is exposed when
+                type equal to NodePort or LoadBalancer.";
         }
     }
 }

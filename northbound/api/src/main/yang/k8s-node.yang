@@ -50,6 +50,10 @@ module k8s-node {
                     We assume that this IP address is reachable by Opendaylight and it will be used to
                     set the default configurations";
             }
+            leaf pod-cidr {
+                type string;
+                description "PodCIDR represents the pod IP range assigned to the node.";
+            }
         }
     }
 }

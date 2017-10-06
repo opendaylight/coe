@@ -24,9 +24,6 @@ module pod {
 
     contact "Prem Sankar G <prem.sankar.g@ericsson.com";
 
-  /*
-   * Configuration data nodes
-   */
     container coe {
         description
             "Container Configuration Parameters. ";
@@ -44,6 +41,7 @@ module pod {
     grouping pod_attributes {
         description "Kubernetes pod attributes needed by ODL Northbound. ";
 
+        //This should move to node attributes
         leaf version {
             type string;
             description
@@ -57,6 +55,17 @@ module pod {
         leaf uid {
             type    yang:uuid;
             description "UUID representing the pod ";
+        }
+
+        leaf host-ip-address {
+            type inet:ip-address;
+            description "IP address of k8s node.";
+        }
+
+        leaf network-NS {
+            type string;
+            description "Network namespace defines the space for the pod. The empty namespace is
+                equivalent to the default namespace";
         }
 
         list interface {
