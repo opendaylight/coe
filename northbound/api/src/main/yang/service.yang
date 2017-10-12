@@ -22,7 +22,8 @@ module service {
 
     organization "OpenDaylight COE Group";
 
-    contact "Prem Sankar G <prem.sankar.g@ericsson.com";
+    contact "Prem Sankar G <prem.sankar.g@ericsson.com,
+        Mohamed ElSerngawy mohamed.elserngawy@kontron.com";
 
     container service-information {
         description
@@ -57,11 +58,6 @@ module service {
                     "list of external IP Addresses that route the traffic into and from the service.";
             }
 
-            // need to discuss this
-//            leaf-list selectors {
-//                type string;
-//            }
-
             leaf load-balancer-IP {
                 type inet:ip-address;
                 description
@@ -76,14 +72,9 @@ module service {
             }
 
             list service-ports {
+                description "List of the associated ports";
                 uses service-ports-info;
             }
-
-            leaf-list endpoints {
-                type    yang:uuid;
-                description "UUID representing the end-point(pod).";
-            }
-
         }
     }
 

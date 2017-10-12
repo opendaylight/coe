@@ -22,7 +22,8 @@ module pod {
 
     organization "OpenDaylight COE Group";
 
-    contact "Prem Sankar G <prem.sankar.g@ericsson.com";
+    contact "Prem Sankar G <prem.sankar.g@ericsson.com,
+        Mohamed ElSerngawy mohamed.elserngawy@kontron.com";
 
     container coe {
         description
@@ -41,19 +42,8 @@ module pod {
     grouping pod_attributes {
         description "Kubernetes pod attributes needed by ODL Northbound. ";
 
-        //This should move to node attributes
-        leaf version {
-            type string;
-            description
-                "CNI Version used by COE system.
-
-                CNI (Container Network Interface), consists of a specification
-                and libraries for writing plugins to configure network interfaces
-                in Linux containers, along with a number of supported plugins. ";
-        }
-
         leaf uid {
-            type    yang:uuid;
+            type yang:uuid;
             description "UUID representing the pod ";
         }
 
@@ -65,7 +55,12 @@ module pod {
         leaf network-NS {
             type string;
             description "Network namespace defines the space for the pod. The empty namespace is
-                equivalent to the default namespace";
+                equivalent to the default namespace.";
+        }
+
+        leaf port-mac-address {
+            type string;
+            description "Mac-Address of the associated port.";
         }
 
         list interface {
