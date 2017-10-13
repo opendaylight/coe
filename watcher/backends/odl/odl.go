@@ -2,7 +2,6 @@ package odl
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -20,8 +19,9 @@ import (
 )
 
 const (
-	syncTime = 10*time.Minute
+	syncTime = 10 * time.Minute
 )
+
 type backend struct {
 	client    *http.Client
 	urlPrefix string
@@ -39,27 +39,32 @@ func New(url, username, password string) backends.Coe {
 }
 
 func (b backend) AddPod(pod *v1.Pod) error {
-	js, _ := json.MarshalIndent(pod, "", "    ")
-	js = createPodStructure(pod)
+	js := createPodStructure(pod)
 	return b.putPod(string(pod.GetUID()), js)
 }
 
 func (b backend) UpdatePod(old, new *v1.Pod) error {
+	if !compareUpadatedPods(old, new) {
+		newJs := createPodStructure(new)
+		return b.putPod(string(new.GetUID()), newJs)
+	}
 	return nil
 }
 
 func (b backend) DeletePod(pod *v1.Pod) error {
-	b.deletePod(string(pod.GetUID()))
-	return nil
+	return b.deletePod(string(pod.GetUID()))
 }
 
 func (b backend) AddNode(node *v1.Node) error {
-	js, _ := json.MarshalIndent(node, "", "    ")
-	js = createNodeStructure(node)
+	js := createNodeStructure(node)
 	return b.putNode(string(node.GetUID()), js)
 }
 
 func (b backend) UpdateNode(old, new *v1.Node) error {
+	if !compareUpadatedNodes(old, new) {
+		newJs := createNodeStructure(new)
+		return b.putNode(string(new.GetUID()), newJs)
+	}
 	return nil
 }
 
@@ -68,27 +73,37 @@ func (b backend) DeleteNode(node *v1.Node) error {
 }
 
 func (b backend) AddService(service *v1.Service) error {
-	return nil
+	js := createServiceStructure(service)
+	return b.putService(string(service.GetUID()), js)
 }
 
 func (b backend) UpdateService(old, new *v1.Service) error {
+	if !compareUpadatedServices(old, new) {
+		newJs := createServiceStructure(new)
+		return b.putService(string(new.GetUID()), newJs)
+	}
 	return nil
 }
 
 func (b backend) DeleteService(service *v1.Service) error {
-	return nil
+	return b.deleteService(string(service.GetUID()))
 }
 
 func (b backend) AddEndpoints(endpoints *v1.Endpoints) error {
-	return nil
+	js := createEndpointStructure(endpoints)
+	return b.putEndpoints(string(endpoints.GetUID()), js)
 }
 
 func (b backend) UpdateEndpoints(old, new *v1.Endpoints) error {
+	if !compareUpadatedEndPoint(old, new) {
+		newJs := createEndpointStructure(new)
+		return b.putEndpoints(string(new.GetUID()), newJs)
+	}
 	return nil
 }
 
 func (b backend) DeleteEndpoints(endpoints *v1.Endpoints) error {
-	return nil
+	return b.deleteEndpoints(string(endpoints.GetUID()))
 }
 
 func (b backend) doRequest(method, url string, reader io.Reader) error {
@@ -109,7 +124,7 @@ func (b backend) doRequest(method, url string, reader io.Reader) error {
 
 	if res.StatusCode != http.StatusOK {
 		log.Println(res)
-		// TODO return an error
+		return fmt.Errorf("Error while doing request: %v", res)
 	}
 
 	return nil
