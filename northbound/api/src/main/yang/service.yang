@@ -27,7 +27,7 @@ module service {
 
     container service-information {
         description
-            "Container Configuration Parameters. ";
+            "Service container configuration";
 
         list services {
             key "uid";
@@ -36,8 +36,13 @@ module service {
                 "list of all configured services. ";
 
             leaf uid {
-                type    yang:uuid;
+                type yang:uuid;
                 description "UUID representing the service ";
+            }
+
+            leaf name {
+                type string;
+                description "The service name as reported by kubernetes";
             }
 
             leaf cluster-ip-address {
@@ -101,6 +106,72 @@ module service {
             type int32;
             description "The port on each node on which this service is exposed when
                 type equal to NodePort or LoadBalancer.";
+        }
+    }
+
+    container endpoints-info {
+        description "Endpoints container configuration.";
+
+        list endpoints {
+            key "uid";
+
+            leaf uid {
+                type yang:uuid;
+                description "UUID representing the endpoint.";
+            }
+
+            leaf name {
+                type string;
+                description "The endpoint name (should match service name).";
+            }
+
+            leaf network-NS {
+                type string;
+                description "Network namespace defines the space for the endpoint. The empty namespace
+                    is equivalent to the default namespace.";
+            }
+
+            list endpoint-addresses {
+                uses endpoint-addresses-info;
+            }
+
+            list endpoint-ports {
+                uses endpoint-ports-info;
+            }
+        }
+    }
+
+    grouping endpoint-addresses-info {
+        description "Endpoint IP-Addresses information.";
+
+        leaf ip-address {
+            type inet:ip-address;
+            description
+                "The IP address of this endpoint corresponding to the Pod IP-Address.";
+        } 
+
+        leaf host-name {
+            type string;
+            description "The host name of the endpoint.";
+        }
+
+        leaf node-name {
+            type string;
+            description "Name of the node that host this endpoint.";
+        }
+    }
+
+    grouping endpoint-ports-info {
+        description "Endpoint ports information.";
+
+        leaf name {
+            type string;
+            description "Name of this port within the endpoint (should match ServicePort.Name).";
+        }
+
+        leaf port {
+            type int32;
+            description "The endpoint port number.";
         }
     }
 }

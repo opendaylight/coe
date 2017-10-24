@@ -47,6 +47,11 @@ module pod {
             description "UUID representing the pod ";
         }
 
+        leaf name {
+            type string;
+            description "The pod name as reported by kubernetes";
+        }
+
         leaf host-ip-address {
             type inet:ip-address;
             description "IP address of k8s node.";
