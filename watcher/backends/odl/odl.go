@@ -44,7 +44,7 @@ func (b backend) AddPod(pod *v1.Pod) error {
 }
 
 func (b backend) UpdatePod(old, new *v1.Pod) error {
-	if !compareUpadatedPods(old, new) {
+	if !compareUpdatedPods(old, new) {
 		newJs := createPodStructure(new)
 		return b.putPod(string(new.GetUID()), newJs)
 	}
@@ -61,7 +61,7 @@ func (b backend) AddNode(node *v1.Node) error {
 }
 
 func (b backend) UpdateNode(old, new *v1.Node) error {
-	if !compareUpadatedNodes(old, new) {
+	if !compareUpdatedNodes(old, new) {
 		newJs := createNodeStructure(new)
 		return b.putNode(string(new.GetUID()), newJs)
 	}
@@ -78,7 +78,7 @@ func (b backend) AddService(service *v1.Service) error {
 }
 
 func (b backend) UpdateService(old, new *v1.Service) error {
-	if !compareUpadatedServices(old, new) {
+	if !compareUpdatedServices(old, new) {
 		newJs := createServiceStructure(new)
 		return b.putService(string(new.GetUID()), newJs)
 	}
@@ -95,7 +95,7 @@ func (b backend) AddEndpoints(endpoints *v1.Endpoints) error {
 }
 
 func (b backend) UpdateEndpoints(old, new *v1.Endpoints) error {
-	if !compareUpadatedEndPoint(old, new) {
+	if !compareUpdatedEndPoint(old, new) {
 		newJs := createEndpointStructure(new)
 		return b.putEndpoints(string(new.GetUID()), newJs)
 	}
@@ -124,7 +124,7 @@ func (b backend) doRequest(method, url string, reader io.Reader) error {
 
 	if res.StatusCode != http.StatusOK {
 		log.Println(res)
-		return fmt.Errorf("Error while doing request: %v", res)
+		return fmt.Errorf("HTTP server did not respond with 200 OK: %v", res)
 	}
 
 	return nil

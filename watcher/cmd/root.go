@@ -113,7 +113,7 @@ func initConfig() {
 		panic(err.Error())
 	}
 
-	Config.Clientset = clientSet
+	Config.ClientSet = clientSet
 
 }
 

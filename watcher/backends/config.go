@@ -6,5 +6,5 @@ import (
 
 type Config struct {
 	Backend   Coe
-	Clientset *kubernetes.Clientset
+	ClientSet *kubernetes.Clientset
 }

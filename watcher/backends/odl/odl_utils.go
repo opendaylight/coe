@@ -30,7 +30,7 @@ func createNodeStructure(node *v1.Node) []byte {
 	odlNodes := make([]Node, 1)
 	odlNodes[0] = Node{
 		UID:     node.GetUID(),
-		PodCidr: node.Spec.PodCIDR,
+		PodCIDR: node.Spec.PodCIDR,
 	}
 
 	if len(node.Status.Addresses) > 2 {
@@ -49,7 +49,7 @@ func createNodeStructure(node *v1.Node) []byte {
 	return []byte(jsStr)
 }
 
-func compareUpadatedNodes(newNode *v1.Node, oldNode *v1.Node) bool {
+func compareUpdatedNodes(newNode *v1.Node, oldNode *v1.Node) bool {
 	if newNode.Spec.PodCIDR != oldNode.Spec.PodCIDR {
 		return false
 	}
@@ -83,7 +83,7 @@ func createPodStructure(pod *v1.Pod) []byte {
 	return js
 }
 
-func compareUpadatedPods(newPod *v1.Pod, oldPod *v1.Pod) bool {
+func compareUpdatedPods(newPod *v1.Pod, oldPod *v1.Pod) bool {
 	if newPod.Status.PodIP != oldPod.Status.PodIP {
 		return false
 	}
@@ -129,8 +129,8 @@ func createServiceStructure(service *v1.Service) []byte {
 		}
 	}
 
-	srvs := make([]Service, 1)
-	srvs[0] = Service{
+	services := make([]Service, 1)
+	services[0] = Service{
 		UID:                   service.GetUID(),
 		Name:                  service.GetName(),
 		ClusterIPAddress:      net.ParseIP(service.Spec.ClusterIP),
@@ -140,7 +140,7 @@ func createServiceStructure(service *v1.Service) []byte {
 		LoadBalancerIPAddress: net.ParseIP(service.Spec.LoadBalancerIP),
 		ServicePorts:          srvPorts,
 	}
-	js, err := json.Marshal(srvs)
+	js, err := json.Marshal(services)
 	if err != nil {
 		fmt.Println("Error while formating service object", err)
 	}
@@ -148,7 +148,7 @@ func createServiceStructure(service *v1.Service) []byte {
 	return []byte(jsStr)
 }
 
-func compareUpadatedServices(newService *v1.Service, oldService *v1.Service) bool {
+func compareUpdatedServices(newService *v1.Service, oldService *v1.Service) bool {
 	if !reflect.DeepEqual(newService.Spec.Ports, oldService.Spec.Ports) {
 		return false
 	}
@@ -174,31 +174,31 @@ func compareUpadatedServices(newService *v1.Service, oldService *v1.Service) boo
 }
 
 func createEndpointStructure(endpoint *v1.Endpoints) []byte {
-	endPnts := make([]EndPoints, 1)
-	endPnts[0] = EndPoints{
+	endPoints := make([]EndPoints, 1)
+	endPoints[0] = EndPoints{
 		UID:       endpoint.GetUID(),
 		Name:      endpoint.GetName(),
 		NetworkNS: endpoint.GetNamespace(),
 	}
 	if len(endpoint.Subsets) > 0 {
-		endPntsAddresses := make([]EndPointsAddresses, len(endpoint.Subsets[0].Addresses))
+		endPointsAddresses := make([]EndPointsAddresses, len(endpoint.Subsets[0].Addresses))
 		for i := 0; i < len(endpoint.Subsets[0].Addresses); i++ {
-			endPntsAddresses[i].HostName = endpoint.Subsets[0].Addresses[i].Hostname
+			endPointsAddresses[i].HostName = endpoint.Subsets[0].Addresses[i].Hostname
 			ip := net.ParseIP(endpoint.Subsets[0].Addresses[i].IP)
 			if ip != nil {
-				endPntsAddresses[i].IPAddress = ip
+				endPointsAddresses[i].IPAddress = ip
 			}
-			endPntsAddresses[i].NodeName = endpoint.Subsets[0].Addresses[i].NodeName
+			endPointsAddresses[i].NodeName = endpoint.Subsets[0].Addresses[i].NodeName
 		}
 		endPntPorts := make([]EndPointsPorts, len(endpoint.Subsets[0].Ports))
 		for i := 0; i < len(endpoint.Subsets[0].Ports); i++ {
 			endPntPorts[i].Name = endpoint.Subsets[0].Ports[i].Name
 			endPntPorts[i].Port = endpoint.Subsets[0].Ports[i].Port
 		}
-		endPnts[0].EndPointAddresses = endPntsAddresses
-		endPnts[0].EndPointPorts = endPntPorts
+		endPoints[0].EndPointAddresses = endPointsAddresses
+		endPoints[0].EndPointPorts = endPntPorts
 	}
-	js, err := json.Marshal(endPnts)
+	js, err := json.Marshal(endPoints)
 	if err != nil {
 		fmt.Println("Error while formating service object", err)
 	}
@@ -206,7 +206,7 @@ func createEndpointStructure(endpoint *v1.Endpoints) []byte {
 	return []byte(jsStr)
 }
 
-func compareUpadatedEndPoint(newEndpoint *v1.Endpoints, oldEndpoint *v1.Endpoints) bool {
+func compareUpdatedEndPoint(newEndpoint *v1.Endpoints, oldEndpoint *v1.Endpoints) bool {
 	if len(newEndpoint.Subsets) != len(oldEndpoint.Subsets) {
 		return false
 	}
