@@ -6,21 +6,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"sync"
-	"time"
 
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 
 	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
-const (
-	syncTime = 10 * time.Minute
-)
 
 type backend struct {
 	client    *http.Client
@@ -44,11 +35,8 @@ func (b backend) AddPod(pod *v1.Pod) error {
 }
 
 func (b backend) UpdatePod(old, new *v1.Pod) error {
-	if !compareUpdatedPods(old, new) {
-		newJs := createPodStructure(new)
-		return b.putPod(string(new.GetUID()), newJs)
-	}
-	return nil
+	newJs := createPodStructure(new)
+	return b.putPod(string(new.GetUID()), newJs)
 }
 
 func (b backend) DeletePod(pod *v1.Pod) error {
@@ -61,11 +49,8 @@ func (b backend) AddNode(node *v1.Node) error {
 }
 
 func (b backend) UpdateNode(old, new *v1.Node) error {
-	if !compareUpdatedNodes(old, new) {
-		newJs := createNodeStructure(new)
-		return b.putNode(string(new.GetUID()), newJs)
-	}
-	return nil
+	newJs := createNodeStructure(new)
+	return b.putNode(string(new.GetUID()), newJs)
 }
 
 func (b backend) DeleteNode(node *v1.Node) error {
@@ -78,11 +63,8 @@ func (b backend) AddService(service *v1.Service) error {
 }
 
 func (b backend) UpdateService(old, new *v1.Service) error {
-	if !compareUpdatedServices(old, new) {
-		newJs := createServiceStructure(new)
-		return b.putService(string(new.GetUID()), newJs)
-	}
-	return nil
+	newJs := createServiceStructure(new)
+	return b.putService(string(new.GetUID()), newJs)
 }
 
 func (b backend) DeleteService(service *v1.Service) error {
@@ -95,11 +77,9 @@ func (b backend) AddEndpoints(endpoints *v1.Endpoints) error {
 }
 
 func (b backend) UpdateEndpoints(old, new *v1.Endpoints) error {
-	if !compareUpdatedEndPoint(old, new) {
-		newJs := createEndpointStructure(new)
-		return b.putEndpoints(string(new.GetUID()), newJs)
-	}
-	return nil
+	newJs := createEndpointStructure(new)
+	log.Println(newJs)
+	return b.putEndpoints(string(new.GetUID()), newJs)
 }
 
 func (b backend) DeleteEndpoints(endpoints *v1.Endpoints) error {
@@ -162,60 +142,3 @@ func (b backend) deleteEndpoints(uid string) error {
 	return b.doRequest(http.MethodDelete, b.urlPrefix+EndPointsUrl+uid, nil)
 }
 
-func Watch(clientSet kubernetes.Interface, backend backends.Coe) {
-	wg := &sync.WaitGroup{}
-
-	wg.Add(4)
-
-	shutdown := make(chan struct{})
-
-	signalChannel := make(chan os.Signal, 1)
-	signal.Notify(signalChannel, os.Interrupt)
-	go func() {
-		for range signalChannel {
-			fmt.Println()
-			fmt.Println("Shutting down")
-			close(shutdown)
-			break
-		}
-	}()
-
-	go watchPods(clientSet, wg, backend, shutdown)
-	go watchNodes(clientSet, wg, backend, shutdown)
-	go watchServices(clientSet, wg, backend, shutdown)
-	go watchEndpoints(clientSet, wg, backend, shutdown)
-
-	wg.Wait()
-}
-
-func watchPods(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
-	informer := informers.NewSharedInformerFactory(clientSet, syncTime)
-	podInformer := informer.Core().V1().Pods()
-	podInformer.Informer().AddEventHandler(backends.PodEventWatcher{Backend: backend})
-	podInformer.Informer().Run(shutdown)
-	wg.Done()
-}
-
-func watchServices(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
-	informer := informers.NewSharedInformerFactory(clientSet, syncTime)
-	serviceInformer := informer.Core().V1().Services()
-	serviceInformer.Informer().AddEventHandler(backends.ServiceEventWatcher{Backend: backend})
-	serviceInformer.Informer().Run(shutdown)
-	wg.Done()
-}
-
-func watchEndpoints(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
-	informer := informers.NewSharedInformerFactory(clientSet, syncTime)
-	endpointInformer := informer.Core().V1().Endpoints()
-	endpointInformer.Informer().AddEventHandler(backends.EndpointsEventWatcher{Backend: backend})
-	endpointInformer.Informer().Run(shutdown)
-	wg.Done()
-}
-
-func watchNodes(clientSet kubernetes.Interface, wg *sync.WaitGroup, backend backends.Coe, shutdown <-chan struct{}) {
-	informer := informers.NewSharedInformerFactory(clientSet, syncTime)
-	nodeInformer := informer.Core().V1().Nodes()
-	nodeInformer.Informer().AddEventHandler(backends.NodesEventWatcher{Backend: backend})
-	nodeInformer.Informer().Run(shutdown)
-	wg.Done()
-}

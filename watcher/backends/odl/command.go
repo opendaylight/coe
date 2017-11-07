@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 
 	commands "git.opendaylight.org/gerrit/p/coe.git/watcher/cmd"
+	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
 var Cmd = &cobra.Command{
@@ -44,7 +45,7 @@ var Cmd = &cobra.Command{
 		}
 		backend := New(host, username, password)
 
-		Watch(commands.Config.ClientSet, backend)
+		backends.Watch(commands.Config.ClientSet, backend)
 	},
 }
 

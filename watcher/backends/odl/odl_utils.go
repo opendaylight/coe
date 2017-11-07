@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"reflect"
 
 	"k8s.io/client-go/pkg/api/v1"
 )
@@ -49,13 +48,6 @@ func createNodeStructure(node *v1.Node) []byte {
 	return []byte(jsStr)
 }
 
-func compareUpdatedNodes(newNode *v1.Node, oldNode *v1.Node) bool {
-	if newNode.Spec.PodCIDR != oldNode.Spec.PodCIDR {
-		return false
-	}
-	return reflect.DeepEqual(newNode.Status.Addresses, oldNode.Status.Addresses)
-}
-
 func createPodStructure(pod *v1.Pod) []byte {
 	interfaces := make([]Interface, 1)
 	interfaces[0] = Interface{
@@ -83,24 +75,6 @@ func createPodStructure(pod *v1.Pod) []byte {
 	return js
 }
 
-func compareUpdatedPods(newPod *v1.Pod, oldPod *v1.Pod) bool {
-	if newPod.Status.PodIP != oldPod.Status.PodIP {
-		return false
-	}
-	if newPod.Status.HostIP != oldPod.Status.HostIP {
-		return false
-	}
-	if newPod.GetName() != oldPod.GetName() {
-		return false
-	}
-	if newPod.GetNamespace() != oldPod.GetNamespace() {
-		return false
-	}
-	if newPod.GetUID() != oldPod.GetUID() {
-		return false
-	}
-	return true
-}
 
 func createServiceStructure(service *v1.Service) []byte {
 	srvPorts := make([]ServicePorts, len(service.Spec.Ports))
@@ -148,31 +122,6 @@ func createServiceStructure(service *v1.Service) []byte {
 	return []byte(jsStr)
 }
 
-func compareUpdatedServices(newService *v1.Service, oldService *v1.Service) bool {
-	if !reflect.DeepEqual(newService.Spec.Ports, oldService.Spec.Ports) {
-		return false
-	}
-	if !reflect.DeepEqual(newService.Spec.ExternalIPs, oldService.Spec.ExternalIPs) {
-		return false
-	}
-	if !reflect.DeepEqual(newService.Status.LoadBalancer.Ingress, oldService.Status.LoadBalancer.Ingress) {
-		return false
-	}
-	if newService.Spec.ClusterIP != oldService.Spec.ClusterIP {
-		return false
-	}
-	if newService.Spec.LoadBalancerIP != oldService.Spec.LoadBalancerIP {
-		return false
-	}
-	if newService.GetName() != oldService.GetName() {
-		return false
-	}
-	if newService.GetNamespace() != oldService.GetNamespace() {
-		return false
-	}
-	return true
-}
-
 func createEndpointStructure(endpoint *v1.Endpoints) []byte {
 	endPoints := make([]EndPoints, 1)
 	endPoints[0] = EndPoints{
@@ -206,23 +155,3 @@ func createEndpointStructure(endpoint *v1.Endpoints) []byte {
 	return []byte(jsStr)
 }
 
-func compareUpdatedEndPoint(newEndpoint *v1.Endpoints, oldEndpoint *v1.Endpoints) bool {
-	if len(newEndpoint.Subsets) != len(oldEndpoint.Subsets) {
-		return false
-	}
-	for i := 0; i < len(newEndpoint.Subsets); i++ {
-		if !reflect.DeepEqual(newEndpoint.Subsets[i].Addresses, oldEndpoint.Subsets[i].Addresses) {
-			return false
-		}
-		if !reflect.DeepEqual(newEndpoint.Subsets[i].Ports, oldEndpoint.Subsets[i].Ports) {
-			return false
-		}
-	}
-	if newEndpoint.GetNamespace() != oldEndpoint.GetNamespace() {
-		return false
-	}
-	if newEndpoint.GetName() != oldEndpoint.GetName() {
-		return false
-	}
-	return true
-}
