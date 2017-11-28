@@ -1,5 +1,5 @@
-hash: 4677a81512e38c2cd4346104ac3bf352f32a8b442a06cc3436fc7e99ce8412ff
-updated: 2017-09-14T17:52:22.049317072-04:00
+hash: 7096e8ba7198eaf41bb3bc178093c14e153469498d198f76b77ddca438129602
+updated: 2017-11-28T09:55:10.063590559-05:00
 imports:
 - name: github.com/cenkalti/hub
   version: 11382a9960d39b0ecda16fd01c424c11ff765a34
@@ -10,6 +10,7 @@ imports:
 - name: github.com/containernetworking/cni
   version: a2da8f8d7fd8e6dc25f336408a8ac86f050fbd88
   subpackages:
+  - libcni
   - pkg/invoke
   - pkg/skel
   - pkg/types
@@ -44,7 +45,7 @@ imports:
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
+  version: 076b546753157f758b316e59bcb51e6807c04057
   subpackages:
   - unix
 testImports: []

@@ -7,5 +7,6 @@ import:
   - pkg/types
   - pkg/types/current
   - pkg/version
+  - libcni
 - package: github.com/socketplane/libovsdb
 - package: github.com/vishvananda/netlink
