@@ -177,7 +177,12 @@ func cmdDel(args *skel.CmdArgs) error {
 	}
 	// Get Open vSwitch driver
 	ovsDriver := NewOvsDriver(ovsConfig.OvsBridge)
-	prtName := ovsDriver.GetPortNameByExternalId(args.ContainerID)
+	k8sArgs := K8sArgs{}
+	err = types.LoadArgs(args.Args, &k8sArgs)
+	if err != nil {
+		return fmt.Errorf("Error while parsing k8s arguments, ", err)
+	}
+	prtName := ovsDriver.GetPortNameByExternalId(string(k8sArgs.K8S_POD_NAMESPACE + ":" + k8sArgs.K8S_POD_NAME))
 	return ovsDriver.DeletePortByName(prtName)
 }
 
