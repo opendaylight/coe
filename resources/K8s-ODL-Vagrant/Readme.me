@@ -4,13 +4,13 @@ Steps:
 2- ssh to the vm as vagrant ssh k8s-master
 3- for each vm run the following commands
     - vagrant@k8smaster$ sudo mkdir -p /etc/cni/net.d/
-    - We assume you already succeed to build the odl-cni binary,
+    - We assume you already succeed to build the odlovs-cni binary,
         from your host use the following command to copy the odl-cni
-        binary to the vm $ scp odl-cni vagrant@192.168.33.11:~/
+        binary to the vm $ scp odlovs-cni vagrant@192.168.33.11:~/
         note: 192.168.33.11 is the ip of k8s-master
     - In the VM execute vagrant@k8smaster$ sudo cp odl-cni /opt/cni/bin
     - Also copy the conflist file to the /etc/cni/net.d/ directory
-        ex: vagrant@k8sMaster:~$ sudo cp /vagrant/exmple/master.odlovs-cni.conflist /etc/cni/net.d/
+        ex: vagrant@k8sMaster:~$ sudo cp /vagrant/exmple/master.odlovs-cni.conf /etc/cni/net.d/
     - start the Kubernetes cluster using the following command
         sudo kubeadm init --apiserver-advertise-address=192.168.33.11
         note: read the command output in order to use the kubectl command after
