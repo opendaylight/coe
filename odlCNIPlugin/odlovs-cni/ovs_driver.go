@@ -284,7 +284,7 @@ func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint
 	port["name"] = intfName
 	if externalId != "" {
 		extIDs := make(map[string]string)
-		extIDs["contId"] = externalId
+		extIDs["iface-id"] = externalId
 		port["external_ids"], _ = libovsdb.NewOvsMap(extIDs)
 	}
 	if vlanTag != 0 {
@@ -497,7 +497,7 @@ func (self *OvsDriver) GetPortNameByExternalId(externalId string) string {
 	for _, row := range self.ovsdbCache["Port"] {
 		if extIDs, ok := row.Fields["external_ids"]; ok {
 			extIDsMap := extIDs.(libovsdb.OvsMap).GoMap
-			if contId, ok := extIDsMap["contId"]; ok && contId == externalId {
+			if ifaceId, ok := extIDsMap["iface-id"]; ok && ifaceId == externalId {
 				return row.Fields["name"].(string)
 			}
 		}
