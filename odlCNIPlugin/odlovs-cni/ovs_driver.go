@@ -270,6 +270,11 @@ func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint
 	if intfType != "" {
 		intf["type"] = intfType
 	}
+    if externalId != "" {
+		extIDs := make(map[string]string)
+		extIDs["iface-id"] = externalId
+		intf["external_ids"], _ = libovsdb.NewOvsMap(extIDs)
+	}
 
 	// Add an entry in Interface table
 	intfOp := libovsdb.Operation{
