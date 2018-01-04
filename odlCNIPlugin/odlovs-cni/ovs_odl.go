@@ -50,11 +50,11 @@ func cmdAdd(args *skel.CmdArgs) error {
 	} else {
 		ovsDriver.SetPassiveController(ovsConfig.CtlrPort)
 	}
-	/*if ovsConfig.MgrActive {
-	      ovsDriver.SetActiveManager(ovsConfig.Manager.String(), ovsConfig.MgrPort)
+	if ovsConfig.MgrActive {
+		ovsDriver.SetActiveManager(ovsConfig.Manager.String(), ovsConfig.MgrPort)
 	  } else {
-	      ovsDriver.SetPassiveManager(ovsConfig.MgrPort)
-	  }*/
+		ovsDriver.SetPassiveManager(ovsConfig.MgrPort)
+	}
 
 	// Get Container network namespace
 	contNetNS, err := ns.GetNS(args.Netns)

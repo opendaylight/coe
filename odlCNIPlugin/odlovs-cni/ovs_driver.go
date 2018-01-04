@@ -441,12 +441,6 @@ func (self *OvsDriver) SetController(target string) error {
 	return self.OvsdbTransact(operations)
 }
 
-// Delete controller configuration from OVSDriver bridge
-func (self *OvsDriver) DeleteController(target string) error {
-	// FIXME:
-	return nil
-}
-
 // Add Manager Config to OVS
 // should contain ipAddress and port ex: 127.0.0.1 and 6640
 // if portNo is 0 default port 6640 will be used
@@ -473,14 +467,30 @@ func (self *OvsDriver) SetPassiveManager(portNo int) error {
 
 // Set the Manager Config to OVS
 func (self *OvsDriver) SetManager(target string) error {
-	// FIXME:
-	return nil
-}
+	if target == "" {
+		return fmt.Errorf("target cannot be empty")
+	}
+	managerUuidStr := fmt.Sprintf("local")
 
-// Delete the Manager Config
-func (self *OvsDriver) DeleteManager(target string) error {
-	// FIXME:
-	return nil
+	// If manager already exists, nothing to do
+	if self.IsManagerPresent(target) {
+		return fmt.Errorf("Manager %s already exist", target)
+	}
+
+	// insert a row in manager table
+	manager := make(map[string]interface{})
+	manager["target"] = target
+
+	// Add an entry in Manager table
+	managerOp := libovsdb.Operation{
+		Op:       insertOpr,
+		Table:    "Manager",
+		Row:      manager,
+		UUIDName: managerUuidStr,
+	}
+
+	operations := []libovsdb.Operation{managerOp}
+	return self.OvsdbTransact(operations)
 }
 
 // Check the local cache and see if the portname is exist
@@ -530,6 +540,19 @@ func (self *OvsDriver) IsControllerPresent(target string) bool {
 
 	for _, row := range self.ovsdbCache["Controller"] {
 		if ctlr, ok := row.Fields["target"]; ok && ctlr == target {
+			return true
+		}
+	}
+	return false
+}
+
+// Check if Manager already exists
+func (self *OvsDriver) IsManagerPresent(target string) bool {
+	self.lock.RLock()
+	defer self.lock.RUnlock()
+
+	for _, row := range self.ovsdbCache["Manager"] {
+		if mangr, ok := row.Fields["target"]; ok && mangr == target {
 			return true
 		}
 	}
