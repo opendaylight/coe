@@ -13,3 +13,5 @@ Contents:
 
 .. toctree::
    :maxdepth: 1
+
+   setting-up-coe-dev-environment
