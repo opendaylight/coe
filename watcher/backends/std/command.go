@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	commands "git.opendaylight.org/gerrit/p/coe.git/watcher/cmd"
 	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
+	commands "git.opendaylight.org/gerrit/p/coe.git/watcher/cmd"
 )
 
 var Cmd = &cobra.Command{
