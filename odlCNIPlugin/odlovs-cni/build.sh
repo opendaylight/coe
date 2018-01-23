@@ -1,23 +1,26 @@
 #!/usr/bin/env bash
 
-mkdir -p bin
-mkdir -p vendor/src
+Update=$1
+
 export GOPATH=$PWD/vendor
-echo $GOPATH
-glide update
+echo "GOPATH=" $GOPATH
 
-# glide is wired, delete the src directory
-mkdir vendor/src
+if [ ! -d "vendor/src" ] || [ "$Update" = "update" ]; then
+    mkdir -p bin
+    mkdir -p vendor/src
 
-# for some reasons glide didn't put dependencies under the src folder
-for dir in vendor/*; do
-  if [ "$dir" != "vendor/src" ]; then
-     cp -r $dir vendor/src;
-  fi;
-  done
+    glide update
+    # glide is wired, create the src dir and move dependencies under it.
+    mkdir vendor/src
+    for dir in vendor/*; do
+      if [ "$dir" != "vendor/src" ]; then
+         cp -r $dir vendor/src;
+      fi;
+      done
 
-# duplicating the library confuse go at the build execution.
-rm -rf vendor/src/github.com/containernetworking/plugins/vendor/github.com/containernetworking
-rm -rf vendor/src/github.com/containernetworking/plugins/vendor/github.com/vishvananda
-
-go build -o bin/odlovs-cni
+    # duplicating the library confuse go at the build.
+    rm -rf vendor/src/github.com/containernetworking/plugins/vendor/github.com/containernetworking
+    rm -rf vendor/src/github.com/containernetworking/plugins/vendor/github.com/vishvananda
+else
+    go build -o bin/odlovs-cni
+fi

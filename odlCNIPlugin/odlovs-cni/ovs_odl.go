@@ -45,15 +45,15 @@ func cmdAdd(args *skel.CmdArgs) error {
 	// sleep to make sure the bridge link has been created
 	time.Sleep(300 * time.Millisecond)
 
+	if ovsConfig.MgrActive {
+		ovsDriver.SetActiveManager(ovsConfig.Manager.String(), ovsConfig.MgrPort)
+	} else {
+		ovsDriver.SetPassiveManager(ovsConfig.MgrPort)
+	}
 	if ovsConfig.CtlrActive {
 		ovsDriver.SetActiveController(ovsConfig.Controller.String(), ovsConfig.CtlrPort)
 	} else {
 		ovsDriver.SetPassiveController(ovsConfig.CtlrPort)
-	}
-	if ovsConfig.MgrActive {
-		ovsDriver.SetActiveManager(ovsConfig.Manager.String(), ovsConfig.MgrPort)
-	  } else {
-		ovsDriver.SetPassiveManager(ovsConfig.MgrPort)
 	}
 
 	// Get Container network namespace
@@ -90,7 +90,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("Error while parsing k8s arguments, ", err)
 	}
 
-	err = ovsDriver.CreatePort(hostIface.Name, "", 0, string(k8sArgs.K8S_POD_NAMESPACE+":"+k8sArgs.K8S_POD_NAME))
+	err = ovsDriver.CreatePort(hostIface.Name, "", 0, string(k8sArgs.K8S_POD_NAMESPACE+":"+k8sArgs.K8S_POD_NAME), hostIface.Mac)
 	if err != nil {
 		return fmt.Errorf("Error adding created pods veth to ovs bridge %v", err)
 	}
@@ -138,7 +138,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 
 	// Add the public interface to ovs bridge
 	if ovsConfig.ExternalIntf != "" {
-		err := ovsDriver.CreatePort(ovsConfig.ExternalIntf, "", 0, "")
+		err := ovsDriver.CreatePort(ovsConfig.ExternalIntf, "", 0, "", "")
 		if err != nil {
 			return fmt.Errorf("Error Adding external net interface %v", err)
 		}

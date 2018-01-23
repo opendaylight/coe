@@ -31,6 +31,7 @@ const (
 	// ovsdb operations
 	insertOpr = "insert"
 	deleteOpr = "delete"
+	mutateOpr = "mutate"
 )
 
 // OVS driver state
@@ -197,7 +198,7 @@ func (self *OvsDriver) CreateBridge(bridgeName string) error {
 	condition := libovsdb.NewCondition("_uuid", "==", self.GetRootUuid())
 
 	mutateOp := libovsdb.Operation{
-		Op:        "mutate",
+		Op:        mutateOpr,
 		Table:     "Open_vSwitch",
 		Mutations: []interface{}{mutation},
 		Where:     []interface{}{condition},
@@ -208,7 +209,7 @@ func (self *OvsDriver) CreateBridge(bridgeName string) error {
 	if err != nil {
 		return fmt.Errorf("Error while creating ovs bridge %v", err)
 	}
-	return self.CreatePort(bridgeName, "internal", 0, "")
+	return self.CreatePort(bridgeName, "internal", 0, "", "")
 }
 
 // Delete a bridge from ovs instance
@@ -243,7 +244,7 @@ func (self *OvsDriver) DeleteBridge(bridgeName string) error {
 	condition = libovsdb.NewCondition("_uuid", "==", self.GetRootUuid())
 
 	mutateOp := libovsdb.Operation{
-		Op:        "mutate",
+		Op:        mutateOpr,
 		Table:     "Open_vSwitch",
 		Mutations: []interface{}{mutation},
 		Where:     []interface{}{condition},
@@ -254,7 +255,7 @@ func (self *OvsDriver) DeleteBridge(bridgeName string) error {
 }
 
 // Create port in OVS bridge
-func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint, externalId string) error {
+func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint, externalId string, intfMacAddress string) error {
 	//check if port already created
 	if self.IsPortNamePresent(intfName) {
 		return nil
@@ -270,9 +271,10 @@ func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint
 	if intfType != "" {
 		intf["type"] = intfType
 	}
-    if externalId != "" {
+	if externalId != "" {
 		extIDs := make(map[string]string)
 		extIDs["iface-id"] = externalId
+		extIDs["attached-mac"] = intfMacAddress
 		intf["external_ids"], _ = libovsdb.NewOvsMap(extIDs)
 	}
 
@@ -290,6 +292,7 @@ func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint
 	if externalId != "" {
 		extIDs := make(map[string]string)
 		extIDs["iface-id"] = externalId
+		extIDs["attached-mac"] = intfMacAddress
 		port["external_ids"], _ = libovsdb.NewOvsMap(extIDs)
 	}
 	if vlanTag != 0 {
@@ -317,7 +320,7 @@ func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint
 	mutation := libovsdb.NewMutation("ports", insertOpr, mutateSet)
 	condition := libovsdb.NewCondition("name", "==", self.OvsBridgeName)
 	mutateOp := libovsdb.Operation{
-		Op:        "mutate",
+		Op:        mutateOpr,
 		Table:     "Bridge",
 		Mutations: []interface{}{mutation},
 		Where:     []interface{}{condition},
@@ -367,7 +370,7 @@ func (self *OvsDriver) DeletePortByName(intfName string) error {
 	mutation := libovsdb.NewMutation("ports", deleteOpr, mutateSet)
 	condition = libovsdb.NewCondition("name", "==", self.OvsBridgeName)
 	mutateOp := libovsdb.Operation{
-		Op:        "mutate",
+		Op:        mutateOpr,
 		Table:     "Bridge",
 		Mutations: []interface{}{mutation},
 		Where:     []interface{}{condition},
@@ -431,7 +434,7 @@ func (self *OvsDriver) SetController(target string) error {
 	mutation := libovsdb.NewMutation("controller", insertOpr, mutateSet)
 	condition := libovsdb.NewCondition("name", "==", self.OvsBridgeName)
 	mutateOp := libovsdb.Operation{
-		Op:        "mutate",
+		Op:        mutateOpr,
 		Table:     "Bridge",
 		Mutations: []interface{}{mutation},
 		Where:     []interface{}{condition},
@@ -470,14 +473,13 @@ func (self *OvsDriver) SetManager(target string) error {
 	if target == "" {
 		return fmt.Errorf("target cannot be empty")
 	}
-	managerUuidStr := fmt.Sprintf("local")
-
 	// If manager already exists, nothing to do
 	if self.IsManagerPresent(target) {
 		return fmt.Errorf("Manager %s already exist", target)
 	}
 
 	// insert a row in manager table
+	managerUuidStr := fmt.Sprintf("odlmngr")
 	manager := make(map[string]interface{})
 	manager["target"] = target
 
@@ -489,7 +491,21 @@ func (self *OvsDriver) SetManager(target string) error {
 		UUIDName: managerUuidStr,
 	}
 
-	operations := []libovsdb.Operation{managerOp}
+	// mutating the open_vswitch table.
+	managerUuid := []libovsdb.UUID{{GoUUID: managerUuidStr}}
+	mutateUuid := managerUuid
+	mutateSet, _ := libovsdb.NewOvsSet(mutateUuid)
+	mutation := libovsdb.NewMutation("manager_options", insertOpr, mutateSet)
+	condition := libovsdb.NewCondition("_uuid", "==", self.GetRootUuid())
+
+	mutateOp := libovsdb.Operation{
+		Op:        mutateOpr,
+		Table:     "Open_vSwitch",
+		Mutations: []interface{}{mutation},
+		Where:     []interface{}{condition},
+	}
+
+	operations := []libovsdb.Operation{managerOp, mutateOp}
 	return self.OvsdbTransact(operations)
 }
 
