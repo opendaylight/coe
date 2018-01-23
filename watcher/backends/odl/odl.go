@@ -12,7 +12,6 @@ import (
 	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )
 
-
 type backend struct {
 	client    *http.Client
 	urlPrefix string
@@ -141,4 +140,3 @@ func (b backend) putEndpoints(uid string, js []byte) error {
 func (b backend) deleteEndpoints(uid string) error {
 	return b.doRequest(http.MethodDelete, b.urlPrefix+EndPointsUrl+uid, nil)
 }
-

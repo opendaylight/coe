@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"net"
 
+	"crypto/sha256"
+	"encoding/binary"
 	"k8s.io/client-go/pkg/api/v1"
 )
 
@@ -50,11 +52,17 @@ func createNodeStructure(node *v1.Node) []byte {
 
 func createPodStructure(pod *v1.Pod) []byte {
 	interfaces := make([]Interface, 1)
+	segmentationIDString := fmt.Sprintf("%s:%s", pod.ClusterName, pod.Namespace)
+	segmentationSha256 := sha256.Sum256([]byte(segmentationIDString))
+	segmentationHash := make([]byte, 24)
+	copy(segmentationHash, segmentationSha256[:])
+	segmentationID := binary.LittleEndian.Uint32(segmentationHash)
+
 	interfaces[0] = Interface{
 		UID:            pod.GetUID(),
 		NetworkID:      "00000000-0000-0000-0000-000000000000",
-		NetworkType:    "FLAT",
-		SegmentationID: 0,
+		NetworkType:    "VXLAN",
+		SegmentationID: segmentationID,
 		IPAddress:      net.ParseIP(pod.Status.PodIP),
 	}
 	pods := make([]Pod, 1)
@@ -74,7 +82,6 @@ func createPodStructure(pod *v1.Pod) []byte {
 	}
 	return js
 }
-
 
 func createServiceStructure(service *v1.Service) []byte {
 	srvPorts := make([]ServicePorts, len(service.Spec.Ports))
@@ -154,4 +161,3 @@ func createEndpointStructure(endpoint *v1.Endpoints) []byte {
 	jsStr := `{"service:endpoints":` + string(js) + "}"
 	return []byte(jsStr)
 }
-
