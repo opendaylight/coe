@@ -9,12 +9,13 @@
 package odl
 
 import (
-	"encoding/json"
-	"fmt"
-	"net"
-
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+
 	"k8s.io/client-go/pkg/api/v1"
 )
 
@@ -34,17 +35,30 @@ func createNodeStructure(node *v1.Node) []byte {
 		PodCIDR: node.Spec.PodCIDR,
 	}
 
-	if len(node.Status.Addresses) > 2 {
-		odlNodes[0].HostName = node.Status.Addresses[2].Address
-		odlNodes[0].ExternalIPAddress = net.ParseIP(node.Status.Addresses[1].Address)
-		odlNodes[0].InternalIPAddress = net.ParseIP(node.Status.Addresses[0].Address)
-	} else {
-		odlNodes[0].HostName = node.Status.Addresses[1].Address
-		odlNodes[0].InternalIPAddress = net.ParseIP(node.Status.Addresses[0].Address)
+	for _, address := range node.Status.Addresses {
+		switch address.Type {
+		case v1.NodeHostName:
+			{
+				odlNodes[0].HostName = address.Address
+			}
+		case v1.NodeInternalIP:
+			{
+				odlNodes[0].InternalIPAddress = net.ParseIP(address.Address)
+			}
+		case v1.NodeExternalIP:
+			{
+				odlNodes[0].ExternalIPAddress = net.ParseIP(address.Address)
+			}
+		default:
+			{
+				log.Println("Unknown address type: ", address.Type)
+			}
+		}
 	}
+
 	js, err := json.Marshal(odlNodes)
 	if err != nil {
-		fmt.Println("Error while formating k8s node object", err)
+		log.Println("Error while formating k8s node object", err)
 	}
 	jsStr := `{"k8s-node:k8s-nodes":` + string(js) + "}"
 	return []byte(jsStr)
@@ -78,7 +92,7 @@ func createPodStructure(pod *v1.Pod) []byte {
 	}
 	js, err := json.Marshal(coe)
 	if err != nil {
-		fmt.Println("Error while formating pod object", err)
+		log.Println("Error while formating pod object", err)
 	}
 	return js
 }
@@ -123,7 +137,7 @@ func createServiceStructure(service *v1.Service) []byte {
 	}
 	js, err := json.Marshal(services)
 	if err != nil {
-		fmt.Println("Error while formating service object", err)
+		log.Println("Error while formating service object", err)
 	}
 	jsStr := `{"service:services":` + string(js) + "}"
 	return []byte(jsStr)
@@ -156,7 +170,7 @@ func createEndpointStructure(endpoint *v1.Endpoints) []byte {
 	}
 	js, err := json.Marshal(endPoints)
 	if err != nil {
-		fmt.Println("Error while formating service object", err)
+		log.Println("Error while formating service object", err)
 	}
 	jsStr := `{"service:endpoints":` + string(js) + "}"
 	return []byte(jsStr)

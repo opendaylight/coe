@@ -34,7 +34,7 @@ type Interface struct {
 type Node struct {
 	UID               types.UID `json:"k8s-node:uid"`
 	PodCIDR           string    `json:"k8s-node:pod-cidr,omitempty"`
-	HostName          string    `json:"k8s-node:host-name"`
+	HostName          string    `json:"k8s-node:host-name,omitempty"`
 	InternalIPAddress net.IP    `json:"k8s-node:internal-ip-address,omitempty"`
 	ExternalIPAddress net.IP    `json:"k8s-node:external-ip-address,omitempty"`
 }
