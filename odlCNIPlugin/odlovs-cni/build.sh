@@ -21,6 +21,6 @@ if [ ! -d "vendor/src" ] || [ "$Update" = "update" ]; then
     # duplicating the library confuse go at the build.
     rm -rf vendor/src/github.com/containernetworking/plugins/vendor/github.com/containernetworking
     rm -rf vendor/src/github.com/containernetworking/plugins/vendor/github.com/vishvananda
-else
-    go build -o bin/odlovs-cni
 fi
+go build -o bin/odlovs-cni
+
