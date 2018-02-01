@@ -20,11 +20,11 @@ sudo su -c "echo \"deb https://apt.dockerproject.org/repo ubuntu-xenial main\" >
 sudo apt-get update
 sudo apt-get purge lxc-docker
 sudo apt-get install -y linux-image-extra-$(uname -r) linux-image-extra-virtual
-sudo apt-get install -y docker-engine bridge-utils
+sudo apt-get install -y docker-engine=17.03.1~ce-0~ubuntu-xenial bridge-utils
 sudo service docker start
 
-#install k8s
+#install k8s v1.9.2
 sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 sudo su -c "echo \"deb http://apt.kubernetes.io/ kubernetes-xenial main\" >> /etc/apt/sources.list.d/kubernetes.list"
 sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubernetes-cni
+sudo apt-get install -y kubelet=1.9.2-00 kubeadm=1.9.2-00 kubectl=1.9.2-00 kubernetes-cni
