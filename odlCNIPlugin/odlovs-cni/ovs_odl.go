@@ -84,22 +84,6 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("Error while setup the container NetNS, %v", err)
 	}
 
-	k8sArgs := K8sArgs{}
-	err = types.LoadArgs(args.Args, &k8sArgs)
-	if err != nil {
-		return fmt.Errorf("Error while parsing k8s arguments, ", err)
-	}
-
-	// Create Port external-ids map
-	extIDs := make(map[string]string)
-	extIDs["iface-id"] = string(k8sArgs.K8S_POD_NAMESPACE + ":" + k8sArgs.K8S_POD_NAME)
-	extIDs["attached-mac"] = hostIface.Mac
-
-	err = ovsDriver.CreatePort(hostIface.Name, "", 0, extIDs)
-	if err != nil {
-		return fmt.Errorf("Error adding created pods veth to ovs bridge %v", err)
-	}
-
 	// We use the default CNI IPAM for now till we decide how will use ODL dhcp service
 	// Run the IPAM plugin and get back the config to apply
 	r, err := ipam.ExecAdd(ovsConfig.IPAM.Type, args.StdinData)
@@ -115,9 +99,11 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("Error IPAM plugin returned missing IP config")
 	}
 
-	result.Interfaces = []*current.Interface{hostIface, contIface}
+	// Create Port external-ids map
+	extIDs := make(map[string]string)
 
 	// Configure the container hardware and IP addresses
+	result.Interfaces = []*current.Interface{hostIface, contIface}
 	if err := contNetNS.Do(func(_ ns.NetNS) error {
 		contIface, err := net.InterfaceByName(args.IfName)
 		if err != nil {
@@ -136,9 +122,24 @@ func cmdAdd(args *skel.CmdArgs) error {
 				_ = arping.GratuitousArpOverIface(ipc.Address.IP, *contIface)
 			}
 		}
+		// Set the container mac address
+		extIDs["attached-mac"] = contIface.HardwareAddr.String()
 		return nil
 	}); err != nil {
 		return fmt.Errorf("Error configure container Hardware And IP Addresses, %v", err)
+	}
+
+	k8sArgs := K8sArgs{}
+	err = types.LoadArgs(args.Args, &k8sArgs)
+	if err != nil {
+		return fmt.Errorf("Error while parsing k8s arguments, ", err)
+	}
+	extIDs["iface-id"] = string(k8sArgs.K8S_POD_NAMESPACE + ":" + k8sArgs.K8S_POD_NAME)
+	//extIDs["attached-mac"] = contIface.Mac
+	//extIDs["host-veth-mac"] = hostIface.Mac
+	err = ovsDriver.CreatePort(hostIface.Name, "", 0, extIDs)
+	if err != nil {
+		return fmt.Errorf("Error adding created pods veth to ovs bridge %v", err)
 	}
 
 	// Add the public interface to ovs bridge
