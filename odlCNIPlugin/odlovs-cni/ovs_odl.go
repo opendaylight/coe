@@ -90,7 +90,12 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("Error while parsing k8s arguments, ", err)
 	}
 
-	err = ovsDriver.CreatePort(hostIface.Name, "", 0, string(k8sArgs.K8S_POD_NAMESPACE+":"+k8sArgs.K8S_POD_NAME), hostIface.Mac)
+	// Create Port external-ids map
+	extIDs := make(map[string]string)
+	extIDs["iface-id"] = string(k8sArgs.K8S_POD_NAMESPACE + ":" + k8sArgs.K8S_POD_NAME)
+	extIDs["attached-mac"] = hostIface.Mac
+
+	err = ovsDriver.CreatePort(hostIface.Name, "", 0, extIDs)
 	if err != nil {
 		return fmt.Errorf("Error adding created pods veth to ovs bridge %v", err)
 	}
@@ -138,7 +143,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 
 	// Add the public interface to ovs bridge
 	if ovsConfig.ExternalIntf != "" {
-		err := ovsDriver.CreatePort(ovsConfig.ExternalIntf, "", 0, "", "")
+		err := ovsDriver.CreatePort(ovsConfig.ExternalIntf, "system", 0, nil)
 		if err != nil {
 			return fmt.Errorf("Error Adding external net interface %v", err)
 		}
@@ -182,7 +187,7 @@ func cmdDel(args *skel.CmdArgs) error {
 	if err != nil {
 		return fmt.Errorf("Error while parsing k8s arguments, ", err)
 	}
-	prtName := ovsDriver.GetPortNameByExternalId(string(k8sArgs.K8S_POD_NAMESPACE + ":" + k8sArgs.K8S_POD_NAME))
+	prtName := ovsDriver.GetPortNameByExternalId("iface-id", string(k8sArgs.K8S_POD_NAMESPACE+":"+k8sArgs.K8S_POD_NAME))
 	return ovsDriver.DeletePortByName(prtName)
 }
 

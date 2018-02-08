@@ -209,7 +209,7 @@ func (self *OvsDriver) CreateBridge(bridgeName string) error {
 	if err != nil {
 		return fmt.Errorf("Error while creating ovs bridge %v", err)
 	}
-	return self.CreatePort(bridgeName, "internal", 0, "", "")
+	return self.CreatePort(bridgeName, "internal", 0, nil)
 }
 
 // Delete a bridge from ovs instance
@@ -255,27 +255,26 @@ func (self *OvsDriver) DeleteBridge(bridgeName string) error {
 }
 
 // Create port in OVS bridge
-func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint, externalId string, intfMacAddress string) error {
+func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint, extIDs map[string]string) error {
 	//check if port already created
 	if self.IsPortNamePresent(intfName) {
 		return nil
 	}
-	portUuidStr := intfName
-	intfUuidStr := "int" + intfName
+	portUuidStr := "odlPtr"
+	intfUuidStr := "odlIntf"
 	portUuid := []libovsdb.UUID{{GoUUID: portUuidStr}}
 	intfUuid := []libovsdb.UUID{{GoUUID: intfUuidStr}}
 	var err error = nil
 
+	port := make(map[string]interface{})
 	intf := make(map[string]interface{})
+
 	intf["name"] = intfName
-	if intfType != "" {
-		intf["type"] = intfType
-	}
-	if externalId != "" {
-		extIDs := make(map[string]string)
-		extIDs["iface-id"] = externalId
-		extIDs["attached-mac"] = intfMacAddress
-		intf["external_ids"], _ = libovsdb.NewOvsMap(extIDs)
+	intf["type"] = intfType
+	if extIDs != nil && len(extIDs) != 0 {
+		extIdsMap, _ := libovsdb.NewOvsMap(extIDs)
+		intf["external_ids"] = extIdsMap
+		port["external_ids"] = extIdsMap
 	}
 
 	// Add an entry in Interface table
@@ -287,19 +286,10 @@ func (self *OvsDriver) CreatePort(intfName string, intfType string, vlanTag uint
 	}
 
 	// insert row in Port table
-	port := make(map[string]interface{})
 	port["name"] = intfName
-	if externalId != "" {
-		extIDs := make(map[string]string)
-		extIDs["iface-id"] = externalId
-		extIDs["attached-mac"] = intfMacAddress
-		port["external_ids"], _ = libovsdb.NewOvsMap(extIDs)
-	}
 	if vlanTag != 0 {
 		port["vlan_mode"] = "access"
 		port["tag"] = vlanTag
-	} else {
-		port["vlan_mode"] = "trunk"
 	}
 
 	port["interfaces"], err = libovsdb.NewOvsSet(intfUuid)
@@ -522,13 +512,13 @@ func (self *OvsDriver) IsPortNamePresent(intfName string) bool {
 }
 
 // Get Port Name by externalId
-func (self *OvsDriver) GetPortNameByExternalId(externalId string) string {
+func (self *OvsDriver) GetPortNameByExternalId(extIdKey string, extIdValue string) string {
 	self.lock.RLock()
 	defer self.lock.RUnlock()
 	for _, row := range self.ovsdbCache["Port"] {
 		if extIDs, ok := row.Fields["external_ids"]; ok {
 			extIDsMap := extIDs.(libovsdb.OvsMap).GoMap
-			if ifaceId, ok := extIDsMap["iface-id"]; ok && ifaceId == externalId {
+			if ifaceId, ok := extIDsMap[extIdKey]; ok && ifaceId == extIdValue {
 				return row.Fields["name"].(string)
 			}
 		}
