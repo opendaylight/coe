@@ -37,18 +37,18 @@ golang and for compiling the binaries you need a golang environment.
 - install git and clone coe repository
 
   -  sudo apt install git
-  -  go get git.opendaylight.org/gerrit/p/coe.git
+  -  go get -d git.opendaylight.org/gerrit/p/coe.git
 
 - build coe watcher binary
 
-  -  cd $GOPATH/src/git.opendaylight.org/gerrit/coe.git/watcher
+  -  cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/watcher
   -  glide install
   -  go build
   -  once the above step is completed, a "watcher" binary will be generated in the same folder
 
 - build coe cni plugin
 
-  - cd $GOPATH/src/git.opendaylight.org/gerrit/coe.git/odlCniPlugin/odlovs-cni
+  - cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/odlCNIPlugin/odlovs-cni
   - ./build.sh
   - cni binary "odlovs-cni" will be created under bin directory
 
@@ -123,13 +123,13 @@ The below steps can be found under the ReadMe file at https://github.com/openday
 - sudo mkdir -p /etc/cni/net.d/
 - copy the appropriate conf files present in coe repo to net.d folder
 
-  - cd $GOPATH/src/git.opendaylight.org/gerrit/coe.git/resources/example
+  - cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/resources/K8s-ODL-Vagrant/example
   - sudo cp master.odlovs-cni.conf /etc/cni/net.d/ [For minions, copy the worker conf file instead of master.conf]
 
 - sudo mkdir -p /opt/cni/bin
 - copy the odlovs-cni binary which we compiled from coe repo, to the cni/bin folder.
 
-  - cd $GOPATH/src/git.opendaylight.org/gerrit/coe.git/odlCNIPlugin/odlovs-cni
+  - cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/odlCNIPlugin/odlovs-cni/bin
   - sudo cp odlovs-cni /opt/cni/bin
 
 
@@ -149,10 +149,10 @@ Start Kubernetes Cluster
 Start COE Watcher on K8S Master
 ===============================
 
-- cd $GOPATH/src/git.opendaylight.org/gerrit/coe.git/watcher
+- cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/watcher
 - ./watcher odl
 - The above step will start the coe watcher, which watches for events from kubernetes, and propagate the same to ODL.
-
+  note : check for master config file in /etc/cni/net.d before running watcher
   note : for watcher to start properly, .kube/config file should be setup properly, this will be explained in the output of kubeadm init command.
 
 Bring up PODs and test connectivity
@@ -161,6 +161,7 @@ Bring up PODs and test connectivity
 - You can now bring up pods and see if they are able to communicate to each other. Create two busybox pods like below:
 
   - kubectl create -f https://github.com/kubernetes/kubernetes/blob/master/hack/testdata/recursive/pod/pod/busybox.yaml
+  -  create pod : kubectl create -f {.yamlfile}
   - Check the status of pods by running kubectl get pods -o wide
   - <faseelak> kubectl get pods -o wide
     <faseelak> NAME       READY     STATUS    RESTARTS   AGE       IP           NODE
