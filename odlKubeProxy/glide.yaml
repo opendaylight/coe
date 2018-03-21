@@ -1,0 +1,31 @@
+package: git.opendaylight.org/gerrit/p/coe.git/odlKubeProxy
+import:
+- package: github.com/Sirupsen/logrus
+- package: github.com/cenkalti/rpc2
+- package: github.com/serngawy/libOpenflow
+  subpackages:
+  - ofctrl
+  - openflow13
+  - protocol
+- package: github.com/serngawy/libovsdb
+  subpackages:
+  - ovsDriver
+- package: k8s.io/api
+  subpackages:
+  - core/v1
+  - extensions/v1beta1
+  - networking/v1
+- package: k8s.io/apimachinery
+  subpackages:
+  - pkg/apis/meta/v1
+  - pkg/fields
+  - pkg/labels
+  - pkg/runtime
+  - pkg/watch
+- package: k8s.io/client-go
+  subpackages:
+  - kubernetes
+  - listers/core/v1
+  - rest
+  - tools/cache
+  - tools/clientcmd
