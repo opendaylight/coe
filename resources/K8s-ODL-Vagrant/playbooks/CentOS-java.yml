@@ -1,0 +1,5 @@
+---
+- name: Install Java JRE
+  yum:
+    name: java-1.8.0-openjdk
+  become: true
