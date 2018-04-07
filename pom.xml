@@ -31,10 +31,22 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
   <modules>
     <module>northbound</module>
     <module>southbound</module>
-    <module>karaf</module>
     <module>features</module>
     <module>artifacts</module>
   </modules>
+
+  <profiles>
+    <profile>
+      <id>karaf</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <modules>
+        <module>karaf</module>
+      </modules>
+    </profile>
+  </profiles>
 
   <!-- DO NOT install or deploy the repo root pom as it's only needed to initiate a build -->
   <build>
