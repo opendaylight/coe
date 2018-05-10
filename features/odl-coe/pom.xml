@@ -18,7 +18,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
 
   <groupId>org.opendaylight.coe</groupId>
   <artifactId>odl-coe</artifactId>
-  <version>0.2.3-SNAPSHOT</version>
+  <version>0.2.4-SNAPSHOT</version>
   <packaging>feature</packaging>
   <name>OpenDaylight :: coe</name>
 
@@ -38,7 +38,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
       <dependency>
         <groupId>org.opendaylight.controller</groupId>
         <artifactId>odl-mdsal-broker</artifactId>
-        <version>1.6.3-SNAPSHOT</version>
+        <version>1.6.4-SNAPSHOT</version>
         <type>xml</type>
         <classifier>features</classifier>
       </dependency>
@@ -48,7 +48,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
       <dependency>
         <groupId>org.opendaylight.netconf</groupId>
         <artifactId>odl-restconf</artifactId>
-        <version>1.6.3-SNAPSHOT</version>
+        <version>1.6.4-SNAPSHOT</version>
         <type>xml</type>
         <classifier>features</classifier>
       </dependency>
