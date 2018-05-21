@@ -88,7 +88,10 @@ func NewOvsDriver(bridgeName string) *OvsDriver {
 	time.Sleep(1 * time.Second)
 
 	// Create the default bridge instance
-	ovsDriver.CreateBridge(ovsDriver.OvsBridgeName)
+    err = ovsDriver.CreateBridge(ovsDriver.OvsBridgeName)
+    if err != nil {
+        log.Fatal("Could not create bridge", err)
+    }
 
 	return ovsDriver
 }
