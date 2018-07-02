@@ -1,8 +1,0 @@
-package: git.opendaylight.org/gerrit/p/coe.git/watcher
-import:
-- package: k8s.io/client-go
-  version: ^v4.0.0
-- package: github.com/spf13/viper
-- package: github.com/spf13/cobra
-- package: github.com/spf13/pflag
-  version: ~1.0.0
