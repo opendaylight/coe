@@ -120,6 +120,8 @@ func cmdAdd(args *skel.CmdArgs) error {
 		for _, ipc := range result.IPs {
 			if ipc.Version == "4" {
 				_ = arping.GratuitousArpOverIface(ipc.Address.IP, *contIface)
+				// Set the container ip-address as external-Id
+				extIDs["ip-address"] = ipc.Address.IP.String()
 			}
 		}
 		// Set the container mac address
@@ -135,8 +137,6 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("Error while parsing k8s arguments, ", err)
 	}
 	extIDs["iface-id"] = string(k8sArgs.K8S_POD_NAMESPACE + ":" + k8sArgs.K8S_POD_NAME)
-	//extIDs["attached-mac"] = contIface.Mac
-	//extIDs["host-veth-mac"] = hostIface.Mac
 	err = ovsDriver.CreatePort(hostIface.Name, "", 0, extIDs)
 	if err != nil {
 		return fmt.Errorf("Error adding created pods veth to ovs bridge %v", err)
