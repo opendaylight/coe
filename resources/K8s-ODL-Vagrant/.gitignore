@@ -1,0 +1,6 @@
+tmp/
+go*
+.vagrant/
+*.retry
+karaf*
+cache/

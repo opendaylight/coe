@@ -1,0 +1,5 @@
+---
+- name: Install Java JRE
+  apt:
+    name: default-jre
+  become: true

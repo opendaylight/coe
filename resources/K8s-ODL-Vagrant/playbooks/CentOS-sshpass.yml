@@ -1,0 +1,5 @@
+---
+- name: Install sshpass
+  yum:
+    name: sshpass
+  become: true

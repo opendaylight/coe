@@ -7,47 +7,107 @@ require 'ipaddr'
 vagrant_config = YAML.load_file("provisioning/virtualbox.conf.yaml")
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "bento/ubuntu-16.04"
+  #config.vm.box = "bento/ubuntu-16.04"
+  config.vm.box = "bento/centos-7.4"
+  config.ssh.insert_key = false
+
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.galaxy_role_file = 'requirements.yaml'
+    ansible.playbook = "playbooks/coe.yml"
+    ansible.groups = {
+      "coe-master" => ["k8s-master"],
+      "coe-minions" => ["k8s-minion1", "k8s-minion2"],
+
+      "coe-examples:children" => ["coe-master"],
+
+      "coe-configure:children" => ["coe-master", "coe-minions"],
+      "coe-configure:vars" => {
+        "manager_ip" => "192.168.33.11",
+        "manager_port" => 6640,
+        "controller_ip" => "192.168.33.11",
+        "controller_port" => 6653,
+        # escape quotes to avoid 1.10 resolving as 1.1
+        "go_version" => "\"1.10\"",
+      },
+
+      "coe-odl:children" => ["coe-master"],
+
+      "coe-configure-watcher:children" => ["coe-master"],
+
+      "coe-run-watcher:children" => ["coe-master"],
+
+      "coe-all:children" => ["coe-master", "coe-minions"],
+      "coe-run-master:children" => ["coe-master"],
+      "coe-run-master:vars" => {
+        "k8s_advertise_address": "192.168.33.11",
+      },
+      "coe-run-minions:children" => ["coe-minions"],
+    }
+    ansible.host_vars = {
+      "k8s-master" => {
+        external_interface: "",
+        overlay_ip: "192.168.33.11",
+        external_ip: "",
+        subnet: "10.11.1.0/24",
+        gateway: "10.11.1.1"
+      },
+      "k8s-minion1" => {
+        external_interface: "enp0s9",
+        overlay_ip: "192.168.33.12",
+        external_ip: "192.168.50.12",
+        subnet: "10.11.2.0/24",
+        gateway: "10.11.2.1"
+      },
+      "k8s-minion2" => {
+        external_interface: "enp0s9",
+        overlay_ip: "192.168.33.13",
+        external_ip: "192.168.50.13",
+        subnet: "10.11.3.0/24",
+        gateway: "10.11.3.1"
+      }
+    }
+  end
 
   # Spawn up the k8 master node
   config.vm.define "k8s-master" do |k8smaster|
     k8smaster.vm.hostname = "k8sMaster"
     k8smaster.vm.network "private_network", ip: vagrant_config['k8smaster']['overlay-ip']
     k8smaster.vm.network "private_network", ip: vagrant_config['k8smaster']['public-ip']
-    k8smaster.vm.provision "shell", path: "provisioning/setup-Req.sh", privileged: false, :args => "#{vagrant_config['odl_ip']} #{vagrant_config['k8smaster']['overlay-ip']}"
-    k8smaster.vm.provision "shell", path: "provisioning/setup-k8s-master.sh", privileged: false
     k8smaster.vm.provider "virtualbox" do |vb|
        vb.name = vagrant_config['k8smaster']['name']
-       vb.customize ["modifyvm", :id, "--memory", "2048"]
+       vb.customize ["modifyvm", :id, "--memory", "4096"]
     end
   end
 
-  # Spawn up the k8 minion1 node
-  config.vm.define "k8s-minion1" do |k8sminion1|
-    k8sminion1.vm.hostname = "k8sMinion1"
-    k8sminion1.vm.network "private_network", ip: vagrant_config['k8sminion1']['overlay-ip'],auto_config: false
-    k8sminion1.vm.network "private_network", ip: vagrant_config['k8sminion1']['public-ip']
-    k8sminion1.vm.provision "shell", path: "provisioning/setup-Req.sh", privileged: false, :args => "#{vagrant_config['odl_ip']} #{vagrant_config['k8sminion1']['overlay-ip']}"
-    
-    k8sminion1.vm.provider "virtualbox" do |vb|
-       vb.name = vagrant_config['k8sminion1']['name']
-       vb.customize ["modifyvm", :id, "--memory", "2048"]
-    end
-  end
+ # Spawn up the k8 minion1 node
+ config.vm.define "k8s-minion1" do |k8sminion1|
+   k8sminion1.vm.hostname = "k8sMinion1"
+   k8sminion1.vm.network "private_network", ip: vagrant_config['k8sminion1']['overlay-ip']
+   k8sminion1.vm.network "private_network", ip: vagrant_config['k8sminion1']['public-ip']
+   # k8sminion1.vm.provision "shell", path: "provisioning/setup-Req.sh", privileged: false, :args => "#{vagrant_config['odl_ip']} #{vagrant_config['k8sminion1']['overlay-ip']}"
 
-  # Spawn up the k8 minion2 node
-  config.vm.define "k8s-minion2" do |k8sminion2|
-    k8sminion2.vm.hostname = "k8sMinion2"
-    k8sminion2.vm.network "private_network", ip: vagrant_config['k8sminion2']['overlay-ip']
-    k8sminion2.vm.network "private_network", ip: vagrant_config['k8sminion2']['public-ip']
-    k8sminion2.vm.provision "shell", path: "provisioning/setup-Req.sh", privileged: false, :args => "#{vagrant_config['odl_ip']} #{vagrant_config['k8sminion2']['overlay-ip']}"
-    k8sminion2.vm.provider "virtualbox" do |vb|
-       vb.name = vagrant_config['k8sminion2']['name']
-       vb.customize ["modifyvm", :id, "--memory", "2048"]
-    end
-  end
+   k8sminion1.vm.provider "virtualbox" do |vb|
+      vb.name = vagrant_config['k8sminion1']['name']
+      vb.customize ["modifyvm", :id, "--memory", "2048"]
+   end
+ end
+
+ # Spawn up the k8 minion2 node
+ config.vm.define "k8s-minion2" do |k8sminion2|
+   k8sminion2.vm.hostname = "k8sMinion2"
+   k8sminion2.vm.network "private_network", ip: vagrant_config['k8sminion2']['overlay-ip']
+   k8sminion2.vm.network "private_network", ip: vagrant_config['k8sminion2']['public-ip']
+   # k8sminion2.vm.provision "shell", path: "provisioning/setup-Req.sh", privileged: false, :args => "#{vagrant_config['odl_ip']} #{vagrant_config['k8sminion2']['overlay-ip']}"
+   k8sminion2.vm.provider "virtualbox" do |vb|
+      vb.name = vagrant_config['k8sminion2']['name']
+      vb.customize ["modifyvm", :id, "--memory", "2048"]
+   end
+ end
+
 
   config.vm.provider "virtualbox" do |v|
-    v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+    #v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+    v.customize ["modifyvm", :id, "--cpus", 8]
+
   end
 end
