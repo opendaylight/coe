@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+    labels:
+      k8s-app: ovs-kube-proxy
+    name: ovs-kube-proxy
+    namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: ovs-kube-proxy
+  template:
+    metadata:
+      labels:
+        k8s-app: ovs-kube-proxy
+    spec:
+      hostNetwork: true
+      containers:
+        - name: ovs-kube-proxy
+          image: melserngawy/symkubeproxy:v1.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /root/.kube/
+            name: kubeconfig
+            readOnly: true
+          - mountPath: /etc/cni/net.d/
+            name: kubeproxy
+            readOnly: true
+          - mountPath: /var/run/openvswitch/
+            name: ovs
+            readOnly: false
+      volumes:
+       - name: kubeconfig
+         hostPath:
+           path: /home/vagrant/.kube/ # This directory needs to change based on the deployement
+       - name: ovs
+         hostPath:
+           path: /var/run/openvswitch/
+       - name: kubeproxy
+         hostPath:
+           path: /etc/cni/net.d/
