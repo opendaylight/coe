@@ -3,4 +3,4 @@
 - src: fkautz.golang-install
 - src: fkautz.kubernetes-install
 - src: fkautz.openvswitch-install
-- src: lfit.docker-install
+- src: fkautz.docker-install

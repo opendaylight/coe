@@ -11,7 +11,7 @@
   roles:
     - fkautz.bridge-utils-install
     - fkautz.openvswitch-install
-    - lfit.docker-install
+    - fkautz.docker-install
     - fkautz.kubernetes-install
     - fkautz.golang-install
 
@@ -22,13 +22,11 @@
         url: https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant
         dest: /home/vagrant/.ssh/id_rsa
         mode: 0600
-      creates: /home/vagrant/.ssh/id_rsa
     - name: Download vagrant public key
       get_url:
         url: https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub
         dest: /home/vagrant/.ssh/id_rsa.pub
         mode: 0600
-      creates: /home/vagrant/.ssh/id_rsa.pub
 
 
 - hosts: coe-examples
@@ -73,6 +71,7 @@
       git:
         repo: 'https://git.opendaylight.org/gerrit/p/coe.git'
         dest: "{{ coe_path }}"
+        force: yes
     - name: Fetch odl-cni dependencies with dep
       shell: dep ensure -vendor-only
       args:
@@ -120,7 +119,7 @@
 
 - hosts: coe-odl
   vars:
-    odl_version: 0.9.0
+    odl_version: 0.10.0
   tasks:
     - include_tasks: '{{ ansible_distribution }}-java.yml'
     - include_tasks: '{{ ansible_distribution }}-sshpass.yml'
@@ -133,7 +132,6 @@
         url: "https://nexus.opendaylight.org/service/local/artifact/maven/content?r=opendaylight.snapshot&g=org.opendaylight.integration&a=karaf&e=tar.gz&v={{ odl_version }}-SNAPSHOT"
         dest: "{{ ansible_env.HOME }}/karaf-{{ odl_version }}-SNAPSHOT.tar.gz"
         mode: 0600
-      creates: "{{ ansible_env.HOME }}/karaf-{{ odl_version }}-SNAPSHOT.tar.gz"
     - name: Extract ODL
       unarchive:
         src: "{{ ansible_env.HOME }}/karaf-{{ odl_version }}-SNAPSHOT.tar.gz"
