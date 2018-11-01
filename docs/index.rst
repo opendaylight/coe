@@ -15,3 +15,4 @@ Contents:
    :maxdepth: 1
 
    setting-up-coe-dev-environment
+   setting-up-vagrant
