@@ -18,37 +18,37 @@ module k8s-node {
 
     organization "OpenDaylight COE Group";
 
-    contact "Mohamed ElSerngawy m.elserngawy@gmail.com";
+    contact "COE Developers <coe-dev@lists.opendaylight.org>";
 
     container k8s-nodes-info {
         description
-            "Kunernetes Nodes information";
+            "Kubernetes Nodes information";
 
         leaf id {
-            description "Kuberntes node's data tree id";
+            description "Kubernetes node's data tree ID";
             type string;
         }
         list k8s-nodes {
-            description "list of Kuberentes nodes";
+            description "List of Kubernetes nodes.";
 
             key "uid";
             leaf uid {
                 type yang:uuid;
-                description "UUID represents the K8s node";
+                description "UUID representing the K8s node.";
             }
             leaf host-name {
                 type string;
-                description "The hostname as reported by the node’s kernel";
+                description "The hostname as reported by the node’s kernel.";
             }
             leaf external-ip-address {
                 type inet:ip-address;
-                description "The IP address of the node that is externally routable";
+                description "The IP address of the node that is externally routable.";
             }
             leaf internal-ip-address {
                 type inet:ip-address;
                 description "The IP address of the node that is routable only within the k8s cluster.
-                    We assume that this IP address is reachable by Opendaylight and it will be used to
-                    set the default configurations";
+                    We assume that this IP address is reachable by OpenDaylight and it will be used to
+                    set the default configurations.";
             }
             leaf pod-cidr {
                 type string;

@@ -22,34 +22,33 @@ module pod {
 
     organization "OpenDaylight COE Group";
 
-    contact "Prem Sankar G <prem.sankar.g@ericsson.com,
-        Mohamed ElSerngawy mohamed.elserngawy@kontron.com";
+    contact "COE Developers <coe-dev@lists.opendaylight.org>";
 
     container coe {
         description
-            "Container Configuration Parameters. ";
+            "Container Configuration Parameters.";
 
         list pods {
             key "uid";
 
             description
-                "list of all configured pods in the network. ";
+                "List of all configured pods in the network.";
 
             uses pod_attributes;
         }
     }
 
     grouping pod_attributes {
-        description "Kubernetes pod attributes needed by ODL Northbound. ";
+        description "Kubernetes pod attributes needed by ODL Northbound.";
 
         leaf uid {
             type yang:uuid;
-            description "UUID representing the pod ";
+            description "UUID representing the pod.";
         }
 
         leaf name {
             type string;
-            description "The pod name as reported by kubernetes";
+            description "The pod name as reported by Kubernetes.";
         }
 
         leaf host-ip-address {
@@ -65,7 +64,7 @@ module pod {
 
         leaf port-mac-address {
             type string;
-            description "Mac-Address of the associated port.";
+            description "MAC address of the associated port.";
         }
 
         list interface {
@@ -73,7 +72,7 @@ module pod {
 
             leaf uid {
                 type    yang:uuid;
-                description "UUID representing the interface within a pod ";
+                description "UUID representing the interface within a pod.";
             }
 
             leaf ip-address {
@@ -88,7 +87,7 @@ module pod {
     grouping network-attributes {
         leaf network-id {
             type    yang:uuid;
-            description "UUID representing the network";
+            description "UUID representing the network.";
         }
 
         leaf network-type {
@@ -103,9 +102,9 @@ module pod {
         leaf segmentation-id {
             type uint32;
             description "Optional. Isolated segment on the physical network.
-            If segment-type is vlan, this ID is a vlan identifier.
-            If segment-type is vxlan, this ID is a vni.
-            If segment-type is flat/gre, this ID is set to 0";
+            If segment-type is vlan, this ID is a VLAN identifier.
+            If segment-type is vxlan, this ID is a VNI.
+            If segment-type is flat/gre, this ID is set to 0.";
         }
     }
 }
