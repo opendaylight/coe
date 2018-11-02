@@ -30,9 +30,9 @@ golang and for compiling the binaries you need a golang environment.
   - export GOROOT=$HOME/opt/go
   - export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
-- install glide
+- install dep
 
-  - curl https://glide.sh/get | sh
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
 - install git and clone coe repository
 
@@ -42,14 +42,15 @@ golang and for compiling the binaries you need a golang environment.
 - build coe watcher binary
 
   -  cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/watcher
-  -  glide install
+  -  dep ensure -vendor-only
   -  go build
   -  once the above step is completed, a "watcher" binary will be generated in the same folder
 
 - build coe cni plugin
 
   - cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/odlCNIPlugin/odlovs-cni
-  - ./build.sh
+  - dep ensure -vendor-only
+  - go build
   - cni binary "odlovs-cni" will be created under bin directory
 
 
@@ -158,18 +159,57 @@ Start COE Watcher on K8S Master
 Bring up PODs and test connectivity
 ===================================
 
-- You can now bring up pods and see if they are able to communicate to each other. Create two busybox pods like below:
+- You can now bring up pods and see if they are able to communicate to each other.
+- Pods can be brought up on same minion or on different minions.
+- Tunnels have to be created so that pods created on different minions will be able to communicate with other.
+    - To create tunnels run the following commands on master and minions:
 
-  - kubectl create -f https://github.com/kubernetes/kubernetes/blob/master/hack/testdata/recursive/pod/pod/busybox.yaml
-  -  create pod : kubectl create -f {.yamlfile}
-  - Check the status of pods by running kubectl get pods -o wide
-  - <faseelak> kubectl get pods -o wide
-    <faseelak> NAME       READY     STATUS    RESTARTS   AGE       IP           NODE
+    - sudo ovs-vsctl    set O . other_config:local_ip={LOCAL_IP}
+    - sudo ovs-vsctl    set O . external_ids:br-name={BRIDGE_NAME}
+      (from master config file)
+- Nodes have to be given labels so that random allocation of pods can be avoided.For the pod to be eligible to run on a node, the node must have each of the indicated key-value pairs as labels.
 
-    <faseelak> busybox1   1/1       Running   0          20m       10.11.1.33   faseela
+  - kubectl label nodes <node-name> <label-key>=<label-value>
+     eg:kubectl label nodes minion disktype=ssd
+- Also node selector has to be added at the end of pod configuration file.
+- **L2 connectivity(bringing up pods on same minion):**
 
-    <faseelak> busybox2   1/1       Running   0          1m        10.11.1.34   faseela
+  - Include a node selector at the end of your .yaml file(eg:busybox.yaml)
+     nodeSelector:
+        <label-key>=<label-value>
 
-- Try pinging from one pod to another
+        eg:disktype=ssd
+  - Create pods using  kubectl create -f {.yamlfile}
+  - To get .yaml files from the web use,
+    kubectl create -f https://github.com/kubernetes/kubernetes/blob/master/hack/testdata/recursive/pod/pod/busybox.yaml
+  - To check the status of pods run kubectl get pods -o wide
+     eg:      NAME       READY     STATUS    RESTARTS   AGE          IP            NODE
+              busybox1   1/1       Running   1          1h      10.11.2.210   *minion*
 
-  - kubectl exec -it busybox1 ping 10.11.1.34
+              busybox2   1/1       Running   1          1h        10.11.2.211   *minion*
+  - Try pinging from one pod to another,
+     kubectl exec -it busybox1 ping 10.11.2.211
+
+- **L3 connectivity(bringing up pods on different minions):**
+
+  - Label the node with a different label-value and include the node selector in yaml file.
+    eg: kubectl label nodes minion2 disktype=ssl
+  - To check the status of pods run kubectl get pods -o wide
+     eg: NAME       READY     STATUS    RESTARTS   AGE       IP            NODE
+         busybox1   1/1       Running   1          1h        10.11.2.210   *minion*
+
+         busybox2   1/1       Running   1          1h        10.11.2.211   *minion*
+
+         busybox3   1/1       Running   1          1h        10.11.3.5     *minion2*
+
+  - Tunnels have to be created between nodes before L3 ping is done.
+  - Try pinging from one pod to another,
+     kubectl exec -it busybox1 ping 10.11.2.211
+
+
+*Note:*
+^^^^^^^
+
+  For more details on ITM tunnel auto-configuration refer,
+  https://docs.opendaylight.org/en/stable-oxygen/submodules/genius/docs/specs/itm-tunnel-auto-config.html
+
