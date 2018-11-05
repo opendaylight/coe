@@ -22,6 +22,7 @@ import (
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/j-keck/arping"
 	"github.com/vishvananda/netlink"
+	ovs "github.com/serngawy/libovsdb/ovsDriver"
 	"os"
 	"strings"
 	"time"
@@ -41,7 +42,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("Error while parse conf: %v", err)
 	}
 	// Get Open vSwitch driver
-	ovsDriver := NewOvsDriver(ovsConfig.OvsBridge)
+	ovsDriver := ovs.NewOvsDriver(ovsConfig.OvsBridge)
 	// sleep to make sure the bridge link has been created
 	time.Sleep(300 * time.Millisecond)
 
@@ -137,14 +138,14 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("Error while parsing k8s arguments, ", err)
 	}
 	extIDs["iface-id"] = string(k8sArgs.K8S_POD_NAMESPACE + ":" + k8sArgs.K8S_POD_NAME)
-	err = ovsDriver.CreatePort(hostIface.Name, "", 0, extIDs)
+	err = ovsDriver.CreatePort(ovsDriver.OvsBridgeName, hostIface.Name, "", 0, extIDs, nil)
 	if err != nil {
 		return fmt.Errorf("Error adding created pods veth to ovs bridge %v", err)
 	}
 
 	// Add the public interface to ovs bridge
 	if ovsConfig.ExternalIntf != "" {
-		err := ovsDriver.CreatePort(ovsConfig.ExternalIntf, "system", 0, nil)
+		err := ovsDriver.CreatePort(ovsDriver.OvsBridgeName, ovsConfig.ExternalIntf, "system", 0, nil, nil)
 		if err != nil {
 			return fmt.Errorf("Error Adding external net interface %v", err)
 		}
@@ -170,6 +171,55 @@ func cmdAdd(args *skel.CmdArgs) error {
 		netlink.LinkSetUp(link)
 	}
 
+	// Add the public interface to ovs external bridge
+	if ovsConfig.ExternalIntf != "" && !ovsDriver.IsBridgePresent(ovsConfig.OvsExtBridge) {
+		err := ovsDriver.CreateBridge(ovsConfig.OvsExtBridge)
+		if err != nil {
+			return fmt.Errorf("Error creating external bridge %v", err)
+		}
+		// sleep to make sure the bridge link has been created
+		time.Sleep(300 * time.Millisecond)
+
+		// Set the external interface down
+		link, _ := netlink.LinkByName(ovsConfig.ExternalIntf)
+		cidr := ovsConfig.ExternalIp.String() + netmask
+		ipNet, err := netlink.ParseIPNet(cidr)
+		if err != nil {
+			return fmt.Errorf("Error parsing external IPAddress %v", err)
+		}
+		addr := &netlink.Addr{
+			IPNet: ipNet,
+			Label: "",
+			Flags: 0,
+			Scope: 0,
+		}
+		netlink.AddrDel(link, addr)
+		netlink.LinkSetDown(link)
+
+		// Add external intf to br-ext
+		err = ovsDriver.CreatePort(ovsConfig.OvsExtBridge, ovsConfig.ExternalIntf, "", 0, nil, nil)
+		if err != nil {
+			return fmt.Errorf("Error Adding external net interface %v", err)
+		}
+
+		// Set the external IP-address to br-ext intf and up the intf
+		link, _ = netlink.LinkByName(ovsConfig.OvsExtBridge)
+		netlink.AddrAdd(link, addr)
+		netlink.LinkSetUp(link)
+		link, _ = netlink.LinkByName(ovsConfig.ExternalIntf)
+		netlink.LinkSetUp(link)
+
+		// Add patch port to link br-ext with br-int
+		extPrt := "prt-ext"
+		intPrt := "prt-int"
+		opts := make(map[string]string)
+		opts["peer"] = intPrt
+		extID := make(map[string]string)
+		extID["ip-address"] = ovsConfig.ExternalIp.String()
+		ovsDriver.CreatePort(ovsConfig.OvsBridge, extPrt, "patch", 0, extID, opts)
+		opts["peer"] = extPrt
+		ovsDriver.CreatePort(ovsConfig.OvsExtBridge, intPrt, "patch", 0, nil, opts)
+	}
 	return types.PrintResult(result, ovsConfig.CNIVersion)
 }
 
@@ -182,14 +232,14 @@ func cmdDel(args *skel.CmdArgs) error {
 		return err
 	}
 	// Get Open vSwitch driver
-	ovsDriver := NewOvsDriver(ovsConfig.OvsBridge)
+	ovsDriver := ovs.NewOvsDriver(ovsConfig.OvsBridge)
 	k8sArgs := K8sArgs{}
 	err = types.LoadArgs(args.Args, &k8sArgs)
 	if err != nil {
 		return fmt.Errorf("Error while parsing k8s arguments, ", err)
 	}
 	prtName := ovsDriver.GetPortNameByExternalId("iface-id", string(k8sArgs.K8S_POD_NAMESPACE+":"+k8sArgs.K8S_POD_NAME))
-	return ovsDriver.DeletePortByName(prtName)
+	return ovsDriver.DeletePortByName(ovsDriver.OvsBridgeName, prtName)
 }
 
 func main() {
