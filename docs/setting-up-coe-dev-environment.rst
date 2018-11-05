@@ -23,9 +23,9 @@ golang and for compiling the binaries you need a golang environment.
 
   - download golang from https://golang.org/doc/install?download
   - mkdir $HOME/opt
+  - tar -xvf golang tar filename (inside opt)
   - mkdir $HOME/go
   - mkdir $HOME/go/bin
-  - tar -xvf golang
   - export GOPATH=$HOME/go
   - export GOROOT=$HOME/opt/go
   - export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
@@ -33,16 +33,19 @@ golang and for compiling the binaries you need a golang environment.
 - install dep
 
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+  - check for dep in $HOME/go/bin
 
 - install git and clone coe repository
 
   -  sudo apt install git
   -  go get -d git.opendaylight.org/gerrit/p/coe.git
+  -  check for git in $HOME/go/src
 
 - build coe watcher binary
 
   -  cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/watcher
   -  dep ensure -vendor-only
+  -  a vendor file gets created in the same folder
   -  go build
   -  once the above step is completed, a "watcher" binary will be generated in the same folder
 
@@ -50,8 +53,9 @@ golang and for compiling the binaries you need a golang environment.
 
   - cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/odlCNIPlugin/odlovs-cni
   - dep ensure -vendor-only
+  - a vendor file gets created in the same folder
   - go build
-  - cni binary "odlovs-cni" will be created under bin directory
+  - cni binary "odlovs-cni" will be created under same folder
 
 
 Setting Up ODL Netvirt
@@ -70,7 +74,7 @@ Setting Up ODL Netvirt
     - cd karaf/target/assembly/bin
     - karaf clean
     - Once the karaf console comes up, install odl-netvirt-coe feature which will bring up all required modules for k8s integration
-    - opendaylight-karaf>feature:install odl-netvirt-coe odl-restconf
+    - opendaylight-karaf>feature:install odl-netvirt-coe
 
 
 Setting Up K8S Master and Minions
@@ -130,7 +134,7 @@ The below steps can be found under the ReadMe file at https://github.com/openday
 - sudo mkdir -p /opt/cni/bin
 - copy the odlovs-cni binary which we compiled from coe repo, to the cni/bin folder.
 
-  - cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/odlCNIPlugin/odlovs-cni/bin
+  - cd $GOPATH/src/git.opendaylight.org/gerrit/p/coe.git/odlCNIPlugin/odlovs-cni
   - sudo cp odlovs-cni /opt/cni/bin
 
 
@@ -184,9 +188,9 @@ Bring up PODs and test connectivity
     kubectl create -f https://github.com/kubernetes/kubernetes/blob/master/hack/testdata/recursive/pod/pod/busybox.yaml
   - To check the status of pods run kubectl get pods -o wide
      eg:      NAME       READY     STATUS    RESTARTS   AGE          IP            NODE
-              busybox1   1/1       Running   1          1h      10.11.2.210   *minion*
+              busybox1   1/1       Running   1          1h      10.11.2.210       *minion*
 
-              busybox2   1/1       Running   1          1h        10.11.2.211   *minion*
+              busybox2   1/1       Running   1          1h      10.11.2.211       *minion*
   - Try pinging from one pod to another,
      kubectl exec -it busybox1 ping 10.11.2.211
 
