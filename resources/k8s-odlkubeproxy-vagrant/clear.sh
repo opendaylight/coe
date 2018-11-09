@@ -3,7 +3,7 @@
 br=$1
 br2=$2
 
-# clean the env after running $ sudo kubeadem reset
+# clean the env after running $ sudo kubeadm reset
 sudo systemctl stop kubelet
 sudo rm -rf /var/lib/cni/
 sudo rm -rf /var/lib/kubelet/*
