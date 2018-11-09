@@ -2,5 +2,5 @@
 
 mkdir -p bin
 dep ensure
-go build -o bin/odlovs-cni
+GOOS=linux GOARCH=amd64 go build -o bin/odlovs-cni
 

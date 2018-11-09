@@ -35,7 +35,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/socketplane/libovsdb"
+  name = "github.com/serngawy/libovsdb"
 
 [prune]
   go-tests = true
