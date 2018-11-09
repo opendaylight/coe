@@ -189,12 +189,12 @@
       shell: swapoff -a
       become: true
     - name: Run kubeadm init
-      shell: kubeadm init --apiserver-advertise-address={{ k8s_advertise_address }} > /tmp/k8s-output
+      shell: kubeadm init --ignore-preflight-errors=SystemVerification --apiserver-advertise-address={{ k8s_advertise_address }} > /tmp/k8s-output
       args:
         creates: /tmp/k8s-output
       become: true
     - name: Create join script
-      shell: echo "#!/bin/sh" > /tmp/join-k8s.sh && cat /tmp/k8s-output | grep "kubeadm join" | sed -e 's/^[[:space:]]*//g' >> /tmp/join-k8s.sh
+      shell: echo "#!/bin/sh" > /tmp/join-k8s.sh && cat /tmp/k8s-output | grep "kubeadm join" | sed -e 's/^[[:space:]]*//g' | sed -e 's/kubeadm join/kubeadm join --ignore-preflight-errors=SystemVerification/' >> /tmp/join-k8s.sh
       args:
         creates: /tmp/join-k8s.sh
     - name: Fetch join script
