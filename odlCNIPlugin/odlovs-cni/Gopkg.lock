@@ -58,12 +58,9 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/serngawy/libovsdb"
-  packages = [
-    ".",
-    "ovsDriver"
-  ]
-  revision = "1af42e154826b9fef79304d8db0e9b9a1daec7e8"
+  name = "github.com/socketplane/libovsdb"
+  packages = ["."]
+  revision = "4de3618546deba09d8875d719752db32bd4652c0"
 
 [[projects]]
   name = "github.com/vishvananda/netlink"
@@ -91,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "70e47762a782d2cb1ab4188f90834432e74350d337d5dfcd3233ccf8bb953a4d"
+  inputs-digest = "8f6a67884040818214d5a983474bcf22257c92f05672c88a6e9e88a5bd31b9e1"
   solver-name = "gps-cdcl"
   solver-version = 1

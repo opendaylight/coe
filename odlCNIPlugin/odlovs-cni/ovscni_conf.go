@@ -18,17 +18,16 @@ import (
 //Example of the expected json
 //{
 //    "cniVersion":"0.3.0",
-//    "name":"sym-cni",
-//    "type":"symOvSCNI",
+//    "name":"odl-cni",
+//    "type":"odlovs-cni",
 //    "mgrPort":6640,
 //    "mgrActive":true,
 //    "manager":"192.168.33.1",
-//    "ovsBridge":"br-int",
-//    "ovsExtBridge":"br-ext",
+//    "ovsBridge":"ovsbrk8s",
 //    "ctlrPort":6653,
 //    "ctlrActive":true,
 //    "controller":"192.168.33.1",
-//    "externalIntf":"eth2",
+//    "externalIntf":"enp0s9",
 //    "externalIp":"192.168.50.11",
 //    "ipam":{
 //        "type":"host-local",
@@ -47,7 +46,6 @@ type OdlCniConf struct {
 	MgrActive    bool   `json:"mgrActive"`
 	Manager      net.IP `json:"manager"`
 	OvsBridge    string `json:"ovsBridge"`
-	OvsExtBridge string `json:"ovsExtBridge"`
 	CtlrPort     int    `json:"ctlrPort"`
 	CtlrActive   bool   `json:"ctlrActive"`
 	Controller   net.IP `json:"controller"`
@@ -68,6 +66,16 @@ func parseOdlCniConf(stdin []byte) (OdlCniConf, error) {
 	err := json.Unmarshal(stdin, &odlCniConf)
 	if err != nil {
 		fmt.Errorf("failed to parse odlcni configurations: %v", err)
+	}
+
+	if odlCniConf.OvsBridge == "" {
+		odlCniConf.OvsBridge = DefaultBridgeName
+	}
+	if odlCniConf.CtlrPort == 0 {
+		odlCniConf.CtlrPort = DefaultControllerPort
+	}
+	if odlCniConf.MgrPort == 0 {
+		odlCniConf.MgrPort = DefaultManagerPort
 	}
 	return odlCniConf, nil
 }
