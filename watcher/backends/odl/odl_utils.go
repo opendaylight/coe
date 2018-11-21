@@ -9,10 +9,7 @@
 package odl
 
 import (
-	"crypto/sha256"
-	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 
@@ -28,11 +25,12 @@ const (
 
 // Setting the Node attributes based on K8s API server doc
 // https://kubernetes.io/docs/concepts/architecture/nodes/#addresses
-func createNodeStructure(node *v1.Node) []byte {
+func createNodeStructure(node *v1.Node, clusterID string) []byte {
 	odlNodes := make([]Node, 1)
 	odlNodes[0] = Node{
-		UID:     node.GetUID(),
-		PodCIDR: node.Spec.PodCIDR,
+		UID:       node.GetUID(),
+		PodCIDR:   node.Spec.PodCIDR,
+		ClusterID: clusterID,
 	}
 
 	for _, address := range node.Status.Addresses {
@@ -64,24 +62,19 @@ func createNodeStructure(node *v1.Node) []byte {
 	return []byte(jsStr)
 }
 
-func createPodStructure(pod *v1.Pod) []byte {
+func createPodStructure(pod *v1.Pod, clusterID string) []byte {
 	interfaces := make([]Interface, 1)
-	segmentationIDString := fmt.Sprintf("%s:%s", pod.ClusterName, pod.Namespace)
-	segmentationSha256 := sha256.Sum256([]byte(segmentationIDString))
-	segmentationHash := make([]byte, 24)
-	copy(segmentationHash, segmentationSha256[:])
-	segmentationID := binary.LittleEndian.Uint32(segmentationHash)
 
 	interfaces[0] = Interface{
-		UID:            pod.GetUID(),
-		NetworkID:      "00000000-0000-0000-0000-000000000000",
-		NetworkType:    "VXLAN",
-		SegmentationID: segmentationID,
-		IPAddress:      net.ParseIP(pod.Status.PodIP),
+		UID:         pod.GetUID(),
+		NetworkID:   "00000000-0000-0000-0000-000000000000",
+		NetworkType: "VXLAN",
+		IPAddress:   net.ParseIP(pod.Status.PodIP),
 	}
 	pods := make([]Pod, 1)
 	pods[0] = Pod{
 		UID:           pod.GetUID(),
+		ClusterID:     clusterID,
 		Name:          pod.GetName(),
 		HostIPAddress: pod.Status.HostIP,
 		NetworkNS:     pod.Namespace,
@@ -97,7 +90,7 @@ func createPodStructure(pod *v1.Pod) []byte {
 	return js
 }
 
-func createServiceStructure(service *v1.Service) []byte {
+func createServiceStructure(service *v1.Service, clusterID string) []byte {
 	srvPorts := make([]ServicePorts, len(service.Spec.Ports))
 	for i := 0; i < len(service.Spec.Ports); i++ {
 		srvPorts[i] = ServicePorts{
@@ -127,6 +120,7 @@ func createServiceStructure(service *v1.Service) []byte {
 	services := make([]Service, 1)
 	services[0] = Service{
 		UID:                   service.GetUID(),
+		ClusterID:             clusterID,
 		Name:                  service.GetName(),
 		ClusterIPAddress:      net.ParseIP(service.Spec.ClusterIP),
 		ExternalIPAddress:     exIPs,
@@ -143,12 +137,13 @@ func createServiceStructure(service *v1.Service) []byte {
 	return []byte(jsStr)
 }
 
-func createEndpointStructure(endpoint *v1.Endpoints) []byte {
+func createEndpointStructure(endpoint *v1.Endpoints, clusterID string) []byte {
 	endPoints := make([]EndPoints, 1)
 	endPoints[0] = EndPoints{
 		UID:       endpoint.GetUID(),
 		Name:      endpoint.GetName(),
 		NetworkNS: endpoint.GetNamespace(),
+		ClusterID: clusterID,
 	}
 	if len(endpoint.Subsets) > 0 {
 		endPointsAddresses := make([]EndPointsAddresses, len(endpoint.Subsets[0].Addresses))
