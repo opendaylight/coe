@@ -51,6 +51,7 @@ type OdlCniConf struct {
 	Controller   net.IP `json:"controller"`
 	ExternalIntf string `json:"externalIntf"`
 	ExternalIp   net.IP `json:"externalIp"`
+	ClusterID    string `json:"clusterId"`
 }
 
 // K8sArgs is the CNI_ARGS used by Kubernetes
