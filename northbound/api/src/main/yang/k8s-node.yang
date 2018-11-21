@@ -36,6 +36,10 @@ module k8s-node {
                 type yang:uuid;
                 description "UUID representing the K8s node.";
             }
+            leaf cluster-id {
+                type yang:uuid;
+                description "UUID representing the K8s cluster.";
+            }
             leaf host-name {
                 type string;
                 description "The hostname as reported by the node’s kernel.";

@@ -44,6 +44,11 @@ module service {
                 description "The service name as reported by Kubernetes.";
             }
 
+            leaf cluster-id {
+                type yang:uuid;
+                description "UUID representing the K8s cluster";
+            }
+
             leaf cluster-ip-address {
                 type inet:ip-address;
                 description
@@ -54,6 +59,7 @@ module service {
                 type string;
                 description "Network namespace defines the space for the service. The empty namespace
                     is equivalent to the default namespace.";
+                status deprecated;
             }
 
             leaf-list external-ip-address {
@@ -128,6 +134,7 @@ module service {
                 type string;
                 description "Network namespace defines the space for the endpoint. The empty namespace
                     is equivalent to the default namespace.";
+                status deprecated;
             }
 
             list endpoint-addresses {

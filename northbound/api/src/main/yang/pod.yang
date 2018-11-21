@@ -56,10 +56,16 @@ module pod {
             description "IP address of k8s node.";
         }
 
+        leaf cluster-id {
+            type yang:uuid;
+            description "UUID representing the K8s cluster.";
+        }
+
         leaf network-NS {
             type string;
             description "Network namespace defines the space for the pod. The empty namespace is
                 equivalent to the default namespace.";
+            status deprecated;
         }
 
         leaf port-mac-address {
