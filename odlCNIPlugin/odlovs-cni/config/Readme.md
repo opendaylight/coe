@@ -1,0 +1,11 @@
+- We assume you already execute the odlovs-cni/build.sh script and the odlovs-cni binary are exist under the odlovs-cni/bin directroy.
+- Copy the odlovs-cni/bin/odlovs-cni binary to odlovs-cni/config/ directory
+   - odlovs-cni$ cp bin/odlovs-cni config/
+- Build the docker image using the following command.
+   - odlovs-cni$ cd config
+   - odlovs-cni/config$ sudo docker build . -t  odlovs-cni
+- In order to let odlovs-cni docker image run properly with k8s cluster two things should be considered
+   - The k8s cluster config file should be exist under $HOME/.kube/config in each cluster node.
+   - The Pod-cidr should be set in the K8s cluster configuration.
+- Use the odlcni.yaml to create the odlovs-cni in the
+   - $ kubectl create -f odlcni.yaml
