@@ -14,6 +14,7 @@ import (
 
 type backend struct {
 	client    *http.Client
+	clusterId string
 	urlPrefix string
 	username  string
 	password  string
@@ -25,16 +26,18 @@ func New(url, username, password string) backends.Coe {
 		username:  username,
 		password:  password,
 		urlPrefix: url,
+		// TODO Fill this out when cluster-registry work is complete upstream
+		clusterId: "k8s-cluster-id",
 	}
 }
 
 func (b backend) AddPod(pod *v1.Pod) error {
-	js := createPodStructure(pod)
+	js := createPodStructure(pod, b.clusterId)
 	return b.putPod(string(pod.GetUID()), js)
 }
 
 func (b backend) UpdatePod(old, new *v1.Pod) error {
-	newJs := createPodStructure(new)
+	newJs := createPodStructure(new, b.clusterId)
 	return b.putPod(string(new.GetUID()), newJs)
 }
 
@@ -43,12 +46,12 @@ func (b backend) DeletePod(pod *v1.Pod) error {
 }
 
 func (b backend) AddNode(node *v1.Node) error {
-	js := createNodeStructure(node)
+	js := createNodeStructure(node, b.clusterId)
 	return b.putNode(string(node.GetUID()), js)
 }
 
 func (b backend) UpdateNode(old, new *v1.Node) error {
-	newJs := createNodeStructure(new)
+	newJs := createNodeStructure(new, b.clusterId)
 	return b.putNode(string(new.GetUID()), newJs)
 }
 
@@ -57,12 +60,12 @@ func (b backend) DeleteNode(node *v1.Node) error {
 }
 
 func (b backend) AddService(service *v1.Service) error {
-	js := createServiceStructure(service)
+	js := createServiceStructure(service, b.clusterId)
 	return b.putService(string(service.GetUID()), js)
 }
 
 func (b backend) UpdateService(old, new *v1.Service) error {
-	newJs := createServiceStructure(new)
+	newJs := createServiceStructure(new, b.clusterId)
 	return b.putService(string(new.GetUID()), newJs)
 }
 
@@ -71,12 +74,12 @@ func (b backend) DeleteService(service *v1.Service) error {
 }
 
 func (b backend) AddEndpoints(endpoints *v1.Endpoints) error {
-	js := createEndpointStructure(endpoints)
+	js := createEndpointStructure(endpoints, b.clusterId)
 	return b.putEndpoints(string(endpoints.GetUID()), js)
 }
 
 func (b backend) UpdateEndpoints(old, new *v1.Endpoints) error {
-	newJs := createEndpointStructure(new)
+	newJs := createEndpointStructure(new, b.clusterId)
 	log.Println(newJs)
 	return b.putEndpoints(string(new.GetUID()), newJs)
 }

@@ -16,6 +16,7 @@ type Coe struct {
 
 type Pod struct {
 	UID            types.UID   `json:"uid"`
+	ClusterID      string      `json:"cluster-id"`
 	Name           string      `json:"name"`
 	HostIPAddress  string      `json:"host-ip-address,omitempty"`
 	NetworkNS      string      `json:"network-NS"`
@@ -24,15 +25,15 @@ type Pod struct {
 }
 
 type Interface struct {
-	UID            types.UID `json:"uid"`
-	IPAddress      net.IP    `json:"ip-address,omitempty"`
-	NetworkID      string    `json:"network-id"`
-	NetworkType    string    `json:"network-type"`
-	SegmentationID uint32    `json:"segmentation-id"`
+	UID         types.UID `json:"uid"`
+	IPAddress   net.IP    `json:"ip-address,omitempty"`
+	NetworkID   string    `json:"network-id"`
+	NetworkType string    `json:"network-type"`
 }
 
 type Node struct {
 	UID               types.UID `json:"k8s-node:uid"`
+	ClusterID         string    `json:"k8s-node:cluster-id"`
 	PodCIDR           string    `json:"k8s-node:pod-cidr,omitempty"`
 	HostName          string    `json:"k8s-node:host-name,omitempty"`
 	InternalIPAddress net.IP    `json:"k8s-node:internal-ip-address,omitempty"`
@@ -41,6 +42,7 @@ type Node struct {
 
 type Service struct {
 	UID                   types.UID      `json:"service:uid"`
+	ClusterID             string         `json:"service:cluster-id"`
 	Name                  string         `json:"service:name"`
 	ClusterIPAddress      net.IP         `json:"service:cluster-ip-address"`
 	NetworkNS             string         `json:"service:network-NS"`
@@ -59,6 +61,7 @@ type ServicePorts struct {
 
 type EndPoints struct {
 	UID               types.UID            `json:"service:uid"`
+	ClusterID         string               `json:"service:cluster-id"`
 	Name              string               `json:"service:name"`
 	NetworkNS         string               `json:"service:network-NS"`
 	EndPointAddresses []EndPointsAddresses `json:"service:endpoint-addresses,omitempty"`
