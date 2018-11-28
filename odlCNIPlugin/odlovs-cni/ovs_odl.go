@@ -40,6 +40,10 @@ func cmdAdd(args *skel.CmdArgs) error {
 	if err != nil {
 		return fmt.Errorf("Error while parse conf: %v", err)
 	}
+
+	if ovsConfig.ClusterID == "" {
+		ovsConfig.ClusterID = "k8s-cluster-id"
+	}
 	// Get Open vSwitch driver
 	ovsDriver := NewOvsDriver(ovsConfig.OvsBridge)
 	// sleep to make sure the bridge link has been created
@@ -136,7 +140,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 	if err != nil {
 		return fmt.Errorf("Error while parsing k8s arguments, ", err)
 	}
-	extIDs["iface-id"] = string(k8sArgs.K8S_POD_NAMESPACE + ":" + k8sArgs.K8S_POD_NAME)
+	extIDs["iface-id"] = fmt.Sprintf("%s:%s", ovsConfig.ClusterID, k8sArgs.K8S_POD_NAME)
 	err = ovsDriver.CreatePort(hostIface.Name, "", 0, extIDs)
 	if err != nil {
 		return fmt.Errorf("Error adding created pods veth to ovs bridge %v", err)
