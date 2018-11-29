@@ -185,7 +185,7 @@ Bring up PODs and test connectivity
         eg:disktype=ssd
   - Create pods using  kubectl create -f {.yamlfile}
   - To get .yaml files from the web use,
-    kubectl create -f https://github.com/kubernetes/kubernetes/blob/master/hack/testdata/recursive/pod/pod/busybox.yaml
+    kubectl create -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/hack/testdata/recursive/pod/pod/busybox.yaml
   - To check the status of pods run kubectl get pods -o wide
      eg:      NAME       READY     STATUS    RESTARTS   AGE          IP            NODE
               busybox1   1/1       Running   1          1h      10.11.2.210       *minion*
