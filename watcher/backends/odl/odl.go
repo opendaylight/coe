@@ -27,7 +27,7 @@ func New(url, username, password string) backends.Coe {
 		password:  password,
 		urlPrefix: url,
 		// TODO Fill this out when cluster-registry work is complete upstream
-		clusterId: "k8s-cluster-id",
+		clusterId: "00000000-0000-0000-0000-000000000001",
 	}
 }
 
@@ -113,6 +113,7 @@ func (b backend) doRequest(method, url string, reader io.Reader) error {
 }
 
 func (b backend) putPod(uid string, js []byte) error {
+	fmt.Println(string(js))
 	return b.doRequest(http.MethodPut, b.urlPrefix+PodsUrl+uid, bytes.NewBuffer(js))
 }
 
@@ -121,6 +122,7 @@ func (b backend) deletePod(uid string) error {
 }
 
 func (b backend) putNode(uid string, js []byte) error {
+	fmt.Println(string(js))
 	return b.doRequest(http.MethodPut, b.urlPrefix+NodesUrl+uid, bytes.NewBuffer(js))
 }
 
@@ -129,6 +131,7 @@ func (b backend) deleteNode(uid string) error {
 }
 
 func (b backend) putService(uid string, js []byte) error {
+	fmt.Println(string(js))
 	return b.doRequest(http.MethodPut, b.urlPrefix+ServicesUrl+uid, bytes.NewBuffer(js))
 }
 
@@ -137,6 +140,7 @@ func (b backend) deleteService(uid string) error {
 }
 
 func (b backend) putEndpoints(uid string, js []byte) error {
+	fmt.Println(string(js))
 	return b.doRequest(http.MethodPut, b.urlPrefix+EndPointsUrl+uid, bytes.NewBuffer(js))
 }
 

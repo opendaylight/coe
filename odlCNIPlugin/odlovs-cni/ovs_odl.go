@@ -13,6 +13,10 @@ import (
 	"net"
 	"runtime"
 
+	"os"
+	"strings"
+	"time"
+
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/types/current"
@@ -22,9 +26,6 @@ import (
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/j-keck/arping"
 	"github.com/vishvananda/netlink"
-	"os"
-	"strings"
-	"time"
 )
 
 const (
@@ -42,7 +43,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 	}
 
 	if ovsConfig.ClusterID == "" {
-		ovsConfig.ClusterID = "k8s-cluster-id"
+		ovsConfig.ClusterID = "00000000-0000-0000-0000-000000000001"
 	}
 	// Get Open vSwitch driver
 	ovsDriver := NewOvsDriver(ovsConfig.OvsBridge)
