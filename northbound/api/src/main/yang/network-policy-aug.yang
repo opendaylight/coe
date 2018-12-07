@@ -1,0 +1,56 @@
+module network-policy-aug {
+    yang-version 1;
+    namespace "urn:opendaylight:coe:northbound:network-policy-aug";
+    prefix "network-policy-aug";
+
+    description
+        "This YANG module defines the kubernetes network policy API
+         augmentations.";
+
+    revision "2018-12-05" {
+        description "Initial revision.";
+    }
+
+    import yang-ext { prefix "ext"; }
+    import meta-v1 { prefix meta-v1; revision-date "2018-12-05"; }
+    import network-policy { prefix network-policy; revision-date "2018-12-05"; }
+    import pod { prefix pod; revision-date "2017-06-11"; }
+
+    organization "OpenDaylight COE Group";
+
+    contact "COE Developers <coe-dev@lists.opendaylight.org>";
+
+    grouping pods {
+        uses pod:pod_attributes;
+    }
+
+    augment "/network-policy:network-policy/network-policy:network-policy/network-policy:pod-selector" {
+        description "Augment the network-policy container with pods information.";
+        ext:augment-identifier "spec-pod-selector-aug";
+        uses pods;
+    }
+
+    augment "/network-policy:network-policy/network-policy:network-policy/network-policy:ingress/network-policy:from/network-policy:pod-selector" {
+        description "Augment the container with pods information.";
+        ext:augment-identifier "from-peer-pod-selector-aug";
+        uses pods;
+    }
+
+    augment "/network-policy:network-policy/network-policy:network-policy/network-policy:egress/network-policy:to/network-policy:pod-selector" {
+        description "Augment the container with pods information.";
+        ext:augment-identifier "to-peer-pod-selector-aug";
+        uses pods;
+    }
+
+    augment "/network-policy:network-policy/network-policy:network-policy/network-policy:ingress/network-policy:from/network-policy:namespace-selector" {
+        description "Augment the container with pods information.";
+        ext:augment-identifier "from-peer-namespace-selector-aug";
+        uses pods;
+    }
+
+    augment "/network-policy:network-policy/network-policy:network-policy/network-policy:egress/network-policy:to/network-policy:namespace-selector" {
+        description "Augment the container with pods information.";
+        ext:augment-identifier "to-peer-namespace-selector-aug";
+        uses pods;
+    }
+}
