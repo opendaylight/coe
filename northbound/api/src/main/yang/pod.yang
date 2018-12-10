@@ -104,13 +104,5 @@ module pod {
                 enum "GRE";
             }
         }
-
-        leaf segmentation-id {
-            type uint32;
-            description "Optional. Isolated segment on the physical network.
-            If segment-type is vlan, this ID is a VLAN identifier.
-            If segment-type is vxlan, this ID is a VNI.
-            If segment-type is flat/gre, this ID is set to 0.";
-        }
     }
 }
