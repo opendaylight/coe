@@ -9,10 +9,7 @@
 package odl
 
 import (
-    "crypto/sha256"
-    "encoding/binary"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 
@@ -67,17 +64,11 @@ func createNodeStructure(node *v1.Node, clusterID string) []byte {
 
 func createPodStructure(pod *v1.Pod, clusterID string) []byte {
 	interfaces := make([]Interface, 1)
-    segmentationIDString := fmt.Sprintf("%s:%s", pod.ClusterName, pod.Namespace)
-	segmentationSha256 := sha256.Sum256([]byte(segmentationIDString))
-	segmentationHash := make([]byte, 24)
-	copy(segmentationHash, segmentationSha256[:])
-	segmentationID := binary.LittleEndian.Uint32(segmentationHash)
 
 	interfaces[0] = Interface{
 		UID:         pod.GetUID(),
 		NetworkID:   "00000000-0000-0000-0000-000000000000",
 		NetworkType: "VXLAN",
-		SegmentationID: segmentationID,
 		IPAddress:   net.ParseIP(pod.Status.PodIP),
 	}
 	pods := make([]Pod, 1)

@@ -25,11 +25,10 @@ type Pod struct {
 }
 
 type Interface struct {
-	UID            types.UID `json:"uid"`
-	IPAddress      net.IP    `json:"ip-address,omitempty"`
-	NetworkID      string    `json:"network-id"`
-	NetworkType    string    `json:"network-type"`
-	SegmentationID uint32    `json:"segmentation-id"`
+	UID         types.UID `json:"uid"`
+	IPAddress   net.IP    `json:"ip-address,omitempty"`
+	NetworkID   string    `json:"network-id"`
+	NetworkType string    `json:"network-type"`
 }
 
 type Node struct {
