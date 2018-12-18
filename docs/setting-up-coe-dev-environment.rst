@@ -170,7 +170,7 @@ Bring up PODs and test connectivity
 
     - sudo ovs-vsctl    set O . other_config:local_ip={LOCAL_IP}
     - sudo ovs-vsctl    set O . external_ids:br-name={BRIDGE_NAME}
-      (from master config file)
+      (bridge name will be the same as the value of "ovsBridge" in /etc/cni/net.d/master.odlovs-cni.conf)
 - Nodes have to be given labels so that random allocation of pods can be avoided.For the pod to be eligible to run on a node, the node must have each of the indicated key-value pairs as labels.
 
   - kubectl label nodes <node-name> <label-key>=<label-value>
