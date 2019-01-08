@@ -1,6 +1,6 @@
 module meta-v1 {
     yang-version 1;
-    namespace "urn:opendaylight:coe:northbound:meta-v1";
+    namespace "urn:opendaylight:k8s:meta-v1";
     prefix "meta-v1";
 
     description

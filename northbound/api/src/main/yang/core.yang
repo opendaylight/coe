@@ -1,6 +1,6 @@
 module core {
     yang-version 1;
-    namespace "urn:opendaylight:coe:northbound:core";
+    namespace "urn:opendaylight:k8s:core";
     prefix "core";
 
     description
