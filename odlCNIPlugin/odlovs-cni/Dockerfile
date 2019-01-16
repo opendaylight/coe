@@ -8,7 +8,7 @@ RUN mkdir -p /opt/cni/bin/
 RUN mkdir -p /etc/cni/net.d/
 RUN mkdir -p /root/odlcni/
 WORKDIR /root/odlcni/
-COPY ./odlcni.sh /root/odlcni/
-COPY ./odlovs-cni /root/odlcni/
+COPY ./container/odlcni.sh /root/odlcni/
+COPY ./bin/odlovs-cni /root/odlcni/
 RUN chmod 775 /root/odlcni/*
 ENTRYPOINT ["./odlcni.sh"]
