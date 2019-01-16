@@ -1,13 +1,7 @@
 default: build
 
-build: binary container
-
-binary:
-	dep ensure -vendor-only
-	go build -o bin/odlovs-cni
-
-container:
-	docker build . -t  odlovs-cni
+build:
+	docker build -t  odlovs-cni .
 
 # The directory /home/vagrant/.kube  may need to be change based on the env
 run: build
