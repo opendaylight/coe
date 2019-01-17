@@ -211,8 +211,190 @@ Bring up PODs and test connectivity
      kubectl exec -it busybox1 ping 10.11.2.211
 
 
+Bring Up Services And Test Connectivity
+=======================================
+
+Currently OpenDaylight has been tested to work only for masquerade mode of Kubernetes services, with kube-proxy
+IPTables mode. To get this to work a series of steps are required, an ansible version of this is already available
+in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks
+
+  - The master and worker config files needs to be updated to include the service IP range and
+    the default gateway also requires an update.
+    Complete sample configuration can be found at https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks/templates/odlovs-cni2.conf.j2
+
+  - Enable kube-proxy masquerade mode using:
+
+    [vagrant@k8sMaster ~]$ kubectl edit configmap kube-proxy --namespace=kube-system
+
+    The above command will open the kube-proxy config map, in which the below attributes need to be updated.
+
+    -  masqueradeAll: true
+    -  clusterCIDR: "10.11.0.0/16"
+  - Once kube-proxy configuration is changed, the kube-proxy pods need to be restarted to pick up the new mode.
+    [vagrant@k8sMaster ~]$ kubectl get pods --all-namespaces
+
+    NAMESPACE     NAME                                READY     STATUS              RESTARTS   AGE
+
+    kube-system   etcd-k8smaster                      1/1       Running             0          10m
+
+    kube-system   kube-apiserver-k8smaster            1/1       Running             0          10m
+
+    kube-system   kube-controller-manager-k8smaster   1/1       Running             0          10m
+
+    kube-system   kube-proxy-cpwqw                    1/1       Running             0          10m
+
+    kube-system   kube-proxy-hkxbm                    1/1       Running             0          2m
+
+    kube-system   kube-proxy-xwqdw                    1/1       Running             0          6m
+
+    kube-system   kube-scheduler-k8smaster            1/1       Running             0          10m
+
+    kube-system   odlwatcher-hp5nm                    1/1       Running             1          10m
+
+    [vagrant@k8sMaster ~]$ kubectl delete pod --namespace kube-system kube-proxy-cpwqw
+
+    pod "kube-proxy-cpwqw" deleted
+
+    [vagrant@k8sMaster ~]$ kubectl delete pod --namespace kube-system kube-proxy-hkxbm
+
+    pod "kube-proxy-hkxbm" deleted
+
+    [vagrant@k8sMaster ~]$ kubectl delete pod --namespace kube-system kube-proxy-xwqdw
+
+    pod "kube-proxy-xwqdw" deleted
+
+  - A default-gateway port needs to be created on OVS, to take all packets destined to services to the IPTables.
+    The following commands need to be executed on each kubernetes node:
+
+    [vagrant@k8sMinion1 ~] ovs-vsctl set Interface {{veth-default-gateway-port}} external-ids:iface-id='{{cluster-id}}:minion-services' external-ids:attached-mac=\"{{veth-port-mac}}\" external-ids:is-service-gateway=true
+
+    [vagrant@k8sMinion1 ~] sudo ip link set br-int down
+
+    [vagrant@k8sMinion1 ~] sudo ip addr add {{service-ip-address}}/24 dev {{veth-default-gateway-port}}
+
+    [vagrant@k8sMinion1 ~] sudo ip link set dev {{veth-default-gateway-port}} up
+
+    {{veth-default-gateway-port}} can be any veth port name, provided the same port name is not used already on OVS.
+
+    Once the veth port is created on OVS, the configuration for the default-gateway needs to added to ODL as well.
+
+    curl -v -X PUT -u admin:admin -H \"Content-Type: application/json\" -d @default-gateway-pod.json http://localhost:8181/restconf/config/pod:coe/pods/{{unique-uuid-to-represent-default-gateway-veth}}
+
+    default-gateway-pod.json can be found at
+
+      https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks/templates/odl-pod.json.j2
+
+    Make sure that the attributes used in default-gateway-pod.json match against the {default-gateway-veth-port} external-id setting. A sample external-id setting and corresponding JSON are given below:
+
+    [vagrant@k8sMinion1 ~]ifconfig veth11111111
+
+    veth11111111 Link encap:Ethernet  HWaddr be:36:e8:01:bd:34
+    inet addr:10.11.2.254  Bcast:0.0.0.0  Mask:255.255.255.0
+
+    ovs-vsctl set Interface veth11111111 external-ids:iface-id='00000000-0000-0000-0000-000000000001:minion-services' external-ids:attached-mac=\"be:4b:bd:ca:a9:98\" external-ids:is-service-gateway=true
+
+    .. code-block:: json
+
+    {
+      "pods": [
+        {
+          "uid": "ab86e792-1a1d-11e9-bd54-080027bc132b",
+           "interface": [
+             {
+               "uid": "9caa3d73-1a17-11e9-bd54-080027bc131a",
+
+               "network-id": "00000000-0000-0000-0000-000000000000",
+
+               "network-type": "VXLAN",
+
+               "ip-address": "192.11.2.254"
+
+             }
+
+           ],
+
+           "cluster-id": "00000000-0000-0000-0000-000000000001",
+
+           "port-mac-address": "",
+
+           "network-NS": "default",
+
+           "name": "minion-services",
+
+           "host-ip-address": "192.168.56.101"
+
+        }
+
+      ]
+
+    }
+
+    - IP Routes have to be added on Kubernetes nodes to distinguish between pod traffic and service traffic
+
+      ip route add 10.11.0.0/16 via {{ gateway }}
+      ip route add 10.96.0.0/12 via {{ services_ip_address }}
+
+      gateway and service_ip_address needs to be derived from the /etc/cni/net.d/{cni.conf} config file.
+
+    - Create Kubernetes Service
+
+      kubectl apply -f https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks/examples/apache-e-w.yaml
+
+      Verify if the service got created by the below command :
+
+      [vagrant@k8sMaster ~]$ kubectl get service
+
+      NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+
+      apacheservice   ClusterIP   10.107.87.106   <none>        8800/TCP   4h
+
+      kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP    5h
+
+    - Deploy apache webservice with a set of pods
+
+      kubectl apply -f https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks/examples/apache-deployment.yaml
+
+      Verify if all the pods got deployed under the service by checking :
+
+      [vagrant@k8sMaster ~]$ kubectl get pods -o wide
+      NAME                                READY     STATUS    RESTARTS   AGE       IP           NODE
+
+      apache-deployment-8bf8f9b5c-g6c7j   1/1       Running   0          2h        10.11.2.35   k8sMinion1
+
+      apache-deployment-8bf8f9b5c-gflb7   1/1       Running   0          2h        10.11.2.36   k8sMinion1
+
+      apache-deployment-8bf8f9b5c-pl5v2   1/1       Running   0          2h        10.11.2.37   k8sMinion1
+
+      busybox1                            1/1       Running   4          4h        10.11.2.28   k8sMinion1
+
+
+    - A temporary hack needs to be done on OVS to tweek the netvirt pipeline to get the services working.
+
+      ovs-ofctl -OOpenflow13 add-flow br-int table=21,priority=0,actions=resubmit\\(,17\\)
+
+    - Check if kubernetes node to pod connectivity works.
+      This does not work without the default flow in Table=21 which is created in the previous step.
+      Node to Pod connectvitiy is mandatory for services to work.
+
+      [vagrant@k8sMaster ~]$ ping 10.11.2.35 -c 3
+
+      PING 10.11.2.35 (10.11.2.35) 56(84) bytes of data.
+
+      64 bytes from 10.11.2.35: icmp_seq=1 ttl=64 time=0.335 ms
+
+    - Check if pod to service IP connectivity works
+      [vagrant@k8sMaster ~]$ kubectl exec -it busybox1 wget 10.107.87.106:8800
+
+      Connecting to 10.107.87.106:8800 (10.107.87.106:8800)
+
+      `index.html           100% |*******************************|     7   0:00:00 ETA`
+
 *Note:*
 ^^^^^^^
 
   For more details on ITM tunnel auto-configuration refer,
   https://docs.opendaylight.org/en/stable-oxygen/submodules/genius/docs/specs/itm-tunnel-auto-config.html
+
+
+  For details on iptables based kubeproxy implementation in netvirt, refer,
+  https://docs.opendaylight.org/projects/netvirt/en/latest/specs/neon/coe-service-integration.html
