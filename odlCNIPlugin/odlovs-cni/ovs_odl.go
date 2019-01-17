@@ -186,6 +186,9 @@ func cmdDel(args *skel.CmdArgs) error {
 	if err := ipam.ExecDel(ovsConfig.IPAM.Type, args.StdinData); err != nil {
 		return err
 	}
+	if ovsConfig.ClusterID == "" {
+		ovsConfig.ClusterID = "00000000-0000-0000-0000-000000000001"
+        }
 	// Get Open vSwitch driver
 	ovsDriver := NewOvsDriver(ovsConfig.OvsBridge)
 	k8sArgs := K8sArgs{}
@@ -193,7 +196,7 @@ func cmdDel(args *skel.CmdArgs) error {
 	if err != nil {
 		return fmt.Errorf("Error while parsing k8s arguments, ", err)
 	}
-	prtName := ovsDriver.GetPortNameByExternalId("iface-id", string(k8sArgs.K8S_POD_NAMESPACE+":"+k8sArgs.K8S_POD_NAME))
+	prtName := ovsDriver.GetPortNameByExternalId("iface-id", fmt.Sprintf("%s:%s", ovsConfig.ClusterID, k8sArgs.K8S_POD_NAME))
 	return ovsDriver.DeletePortByName(prtName)
 }
 
