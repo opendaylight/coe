@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/api/core/v1"
 
 	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
 )

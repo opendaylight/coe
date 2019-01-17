@@ -3,7 +3,7 @@ package backends
 import (
 	"reflect"
 
-	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/api/core/v1"
 )
 
 func isNodeUpdated(oldNode *v1.Node, newNode *v1.Node) bool {
