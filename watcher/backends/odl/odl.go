@@ -2,6 +2,7 @@ package odl
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -21,7 +22,7 @@ type backend struct {
 }
 
 func New(url, username, password string) backends.Coe {
-	return backend{
+	service := backend{
 		client:    &http.Client{},
 		username:  username,
 		password:  password,
@@ -29,6 +30,35 @@ func New(url, username, password string) backends.Coe {
 		// TODO Fill this out when cluster-registry work is complete upstream
 		clusterId: "00000000-0000-0000-0000-000000000001",
 	}
+
+	err := service.AddCluster()
+	if err != nil {
+		log.Printf("unable to create cluster in odl: %s\n", err.Error())
+	}
+	return service
+}
+
+func (b backend) AddCluster() error {
+	js := createClusterStructure(b.clusterId)
+	createClusterStructure(b.clusterId)
+	return b.putCluster(js)
+}
+
+func createClusterStructure(clusterId string) []byte {
+	clusters := []Cluster{
+		{ClusterID: clusterId},
+	}
+	clusterContainer := ClusterContainer{
+		Clusters: clusters,
+	}
+	cluster := Coe{
+		Clusters: &clusterContainer,
+		Pods: nil,
+	}
+
+	res, _ := json.Marshal(cluster)
+
+	return res
 }
 
 func (b backend) AddPod(pod *v1.Pod) error {
@@ -147,3 +177,8 @@ func (b backend) putEndpoints(uid string, js []byte) error {
 func (b backend) deleteEndpoints(uid string) error {
 	return b.doRequest(http.MethodDelete, b.urlPrefix+EndPointsUrl+uid, nil)
 }
+
+func (b backend) putCluster(js []byte) error {
+	return b.doRequest(http.MethodPut, b.urlPrefix+ClustersUrl, bytes.NewBuffer(js))
+}
+

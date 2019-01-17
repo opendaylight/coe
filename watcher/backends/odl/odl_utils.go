@@ -21,6 +21,7 @@ const (
 	NodesUrl     = "/restconf/config/k8s-node:k8s-nodes-info/k8s-nodes/"
 	ServicesUrl  = "/restconf/config/service:service-information/services/"
 	EndPointsUrl = "/restconf/config/service:endpoints-info/endpoints/"
+	ClustersUrl = "/restconf/config/k8s-cluster:k8s-clusters-info/"
 )
 
 // Setting the Node attributes based on K8s API server doc

@@ -11,7 +11,16 @@ type Namespace struct {
 }
 
 type Coe struct {
-	Pods []Pod `json:"pods"`
+	Clusters *ClusterContainer `json:"k8s-clusters-info,omitempty"`
+	Pods []Pod `json:"pods,omitempty"`
+}
+
+type ClusterContainer struct {
+	Clusters []Cluster `json:"k8s-clusters,omitempty"`
+}
+
+type Cluster struct {
+	ClusterID string `json:"cluster-id"`
 }
 
 type Pod struct {
