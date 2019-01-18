@@ -1,0 +1,60 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+    labels:
+      k8s-app: odl
+    name: odl-cni
+    namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: odl
+  template:
+    metadata:
+      labels:
+        k8s-app: odl
+    spec:
+      hostNetwork: true
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      initContainers:
+        - name: odlovs-cni
+          image: odlovs-cni
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          env:
+           - name: mgr_IPAddress
+             value: "192.168.30.1" # ovs manager ip-address.
+           - name: ctrl_IPAddress
+             value: "192.168.30.1" # br-int controller ip-address.
+           - name: ext_interface
+             value: ""         # name of the external intf at the host for external-ip communication. ex: eth2
+           - name: ext_IPAddress
+             value: "" # external ip-address.
+          volumeMounts:
+          - mountPath: /opt/cni/bin/
+            name: cnibin
+            readOnly: false
+          - mountPath: /etc/cni/net.d/
+            name: cniconf
+            readOnly: false
+          - mountPath: /root/.kube/
+            name: kubeconfig
+            readOnly: true
+      containers:
+        - name: pause
+          image: gcr.io/google_containers/pause
+      volumes:
+       - name: kubeconfig
+         hostPath:
+           path: /home/vagrant/.kube/ # This directory may need to change based on the deployement
+       - name: cniconf
+         hostPath:
+           path: /etc/cni/net.d/
+       - name: cnibin
+         hostPath:
+           path: /opt/cni/bin/

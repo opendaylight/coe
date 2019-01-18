@@ -1,10 +1,8 @@
 default: build
 
-build: build-image
-	docker run --name tmp-odlovs-cni odlovs-cni /bin/true
-	docker cp tmp-odlovs-cni:/go/bin/odlovs-cni odlovs-cni
-	docker rm tmp-odlovs-cni
+build:
+	docker build -t  odlovs-cni .
 
-
-build-image:
-	docker build -t odlovs-cni .
+# The directory /home/vagrant/.kube  may need to be change based on the env
+run: build
+	sudo docker run --network=host -it  -v /home/vagrant/.kube:/root/.kube/ -v /etc/cni/net.d/:/etc/cni/net.d/ -v /opt/cni/bin/:/opt/cni/bin/ odlovs-cni
