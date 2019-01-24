@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"git.opendaylight.org/gerrit/p/coe.git/watcher/backends"
+	"k8s.io/client-go/rest"
 )
 
 var cfgFile string
@@ -93,7 +94,7 @@ func initConfig() {
 	if kubeConfigFile == "" {
 		kubeConfigFile, err = RootCmd.Flags().GetString("kubeconfig")
 		if err != nil {
-			kubeConfigFile = "~/.kube/config"
+			kubeConfigFile = ""
 		}
 	}
 
@@ -103,9 +104,14 @@ func initConfig() {
 		log.Fatalln(err)
 	}
 
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigFile)
-	if err != nil {
-		panic(err.Error())
+	var config *rest.Config
+	if kubeConfigFile == "" {
+		config, err = rest.InClusterConfig()
+	} else {
+		config, err = clientcmd.BuildConfigFromFlags("", kubeConfigFile)
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 
 	clientSet, err := kubernetes.NewForConfig(config)

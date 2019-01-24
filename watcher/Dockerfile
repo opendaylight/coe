@@ -9,3 +9,4 @@ RUN go install -ldflags "-linkmode external -extldflags -static"
 FROM scratch as runtime
 COPY --from=build /go/bin/watcher /go/bin/watcher
 ENTRYPOINT ["/go/bin/watcher"]
+CMD ["odl"]
