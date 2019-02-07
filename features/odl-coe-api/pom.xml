@@ -18,7 +18,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
 
   <groupId>org.opendaylight.coe</groupId>
   <artifactId>odl-coe-api</artifactId>
-  <version>0.4.2-SNAPSHOT</version>
+  <version>0.4.3-SNAPSHOT</version>
   <packaging>feature</packaging>
   <name>OpenDaylight :: coe :: API</name>
 
@@ -27,7 +27,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html INTERNAL
       <dependency>
         <groupId>org.opendaylight.mdsal.model</groupId>
         <artifactId>mdsal-model-artifacts</artifactId>
-        <version>0.13.2-SNAPSHOT</version>
+        <version>0.13.3-SNAPSHOT</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
