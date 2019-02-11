@@ -214,23 +214,18 @@ Bring up PODs and test connectivity
 Bring Up Services And Test Connectivity
 =======================================
 
-Currently OpenDaylight has been tested to work only for masquerade mode of Kubernetes services, with kube-proxy
-IPTables mode. To get this to work a series of steps are required, an ansible version of this is already available
-in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks
+Currently OpenDaylight has been tested to work only for masquerade mode of Kubernetes services, with kube-proxyIPTables mode. To get this to work a series of steps are required, an ansible version of this is already available in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks
 
-  - The master and worker config files needs to be updated to include the service IP range and
-    the default gateway also requires an update.
-    Complete sample configuration can be found at https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks/templates/odlovs-cni2.conf.j2
+- The master and worker config files needs to be updated to include the service IP range and the default gateway also requires an update. Complete sample configuration can be found at https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks/templates/odlovs-cni2.conf.j2
 
-  - Enable kube-proxy masquerade mode using:
+- Enable kube-proxy masquerade mode using:
 
-    [vagrant@k8sMaster ~]$ kubectl edit configmap kube-proxy --namespace=kube-system
-
-    The above command will open the kube-proxy config map, in which the below attributes need to be updated.
+  [vagrant@k8sMaster ~]$ kubectl edit configmap kube-proxy --namespace=kube-system.
+  The above command will open the kube-proxy config map, in which the below attributes need to be updated.
 
     -  masqueradeAll: true
     -  clusterCIDR: "10.11.0.0/16"
-  - Once kube-proxy configuration is changed, the kube-proxy pods need to be restarted to pick up the new mode.
+- Once kube-proxy configuration is changed, the kube-proxy pods need to be restarted to pick up the new mode.
     [vagrant@k8sMaster ~]$ kubectl get pods --all-namespaces
 
     NAMESPACE     NAME                                READY     STATUS              RESTARTS   AGE
@@ -263,9 +258,7 @@ in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-
 
     pod "kube-proxy-xwqdw" deleted
 
-  - A default-gateway port needs to be created on OVS, to take all packets destined to services to the IPTables.
-    The following commands need to be executed on each kubernetes node:
-
+- A default-gateway port needs to be created on OVS, to take all packets destined to services to the IPTables. The following commands need to be executed on each kubernetes node:
     [vagrant@k8sMinion1 ~] ovs-vsctl set Interface {{veth-default-gateway-port}} external-ids:iface-id='{{cluster-id}}:minion-services' external-ids:attached-mac=\"{{veth-port-mac}}\" external-ids:is-service-gateway=true
 
     [vagrant@k8sMinion1 ~] sudo ip link set br-int down
@@ -295,49 +288,34 @@ in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-
 
     .. code-block:: json
 
-    {
-      "pods": [
-        {
-          "uid": "ab86e792-1a1d-11e9-bd54-080027bc132b",
-           "interface": [
-             {
-               "uid": "9caa3d73-1a17-11e9-bd54-080027bc131a",
+           {
+               "pods": [
+                   {
+                       "uid": "ab86e792-1a1d-11e9-bd54-080027bc132b",
+                       "interface": [
+                           {
+                               "uid": "9caa3d73-1a17-11e9-bd54-080027bc131a",
+                               "network-id": "00000000-0000-0000-0000-000000000000",
+                               "network-type": "VXLAN",
+                               "ip-address": "192.11.2.254"
+                           }
+                       ],
+                       "cluster-id": "00000000-0000-0000-0000-000000000001",
+                       "port-mac-address": "",
+                       "network-NS": "default",
+                       "name": "minion-services",
+                       "host-ip-address": "192.168.56.101"
+                   }
+               ]
+           }
 
-               "network-id": "00000000-0000-0000-0000-000000000000",
-
-               "network-type": "VXLAN",
-
-               "ip-address": "192.11.2.254"
-
-             }
-
-           ],
-
-           "cluster-id": "00000000-0000-0000-0000-000000000001",
-
-           "port-mac-address": "",
-
-           "network-NS": "default",
-
-           "name": "minion-services",
-
-           "host-ip-address": "192.168.56.101"
-
-        }
-
-      ]
-
-    }
-
-    - IP Routes have to be added on Kubernetes nodes to distinguish between pod traffic and service traffic
-
+- IP Routes have to be added on Kubernetes nodes to distinguish between pod traffic and service traffic
       ip route add 10.11.0.0/16 via {{ gateway }}
       ip route add 10.96.0.0/12 via {{ services_ip_address }}
 
       gateway and service_ip_address needs to be derived from the /etc/cni/net.d/{cni.conf} config file.
 
-    - Create Kubernetes Service
-
+- Create Kubernetes Service
       kubectl apply -f https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks/examples/apache-e-w.yaml
 
       Verify if the service got created by the below command :
@@ -350,8 +328,7 @@ in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-
 
       kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP    5h
 
-    - Deploy apache webservice with a set of pods
-
+- Deploy apache webservice with a set of pods
       kubectl apply -f https://github.com/opendaylight/coe/tree/master/resources/K8s-ODL-Vagrant/playbooks/examples/apache-deployment.yaml
 
       Verify if all the pods got deployed under the service by checking :
@@ -368,11 +345,10 @@ in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-
       busybox1                            1/1       Running   4          4h        10.11.2.28   k8sMinion1
 
 
-    - A temporary hack needs to be done on OVS to tweek the netvirt pipeline to get the services working.
-
+- A temporary hack needs to be done on OVS to tweek the netvirt pipeline to get the services working.
       ovs-ofctl -OOpenflow13 add-flow br-int table=21,priority=0,actions=resubmit\\(,17\\)
 
-    - Check if kubernetes node to pod connectivity works.
+- Check if kubernetes node to pod connectivity works.
       This does not work without the default flow in Table=21 which is created in the previous step.
       Node to Pod connectvitiy is mandatory for services to work.
 
@@ -382,7 +358,7 @@ in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-
 
       64 bytes from 10.11.2.35: icmp_seq=1 ttl=64 time=0.335 ms
 
-    - Check if pod to service IP connectivity works
+- Check if pod to service IP connectivity works
       [vagrant@k8sMaster ~]$ kubectl exec -it busybox1 wget 10.107.87.106:8800
 
       Connecting to 10.107.87.106:8800 (10.107.87.106:8800)
@@ -392,9 +368,8 @@ in the coe.yml at https://github.com/opendaylight/coe/tree/master/resources/K8s-
 *Note:*
 ^^^^^^^
 
-  For more details on ITM tunnel auto-configuration refer,
+- For more details on ITM tunnel auto-configuration refer,
   https://docs.opendaylight.org/en/stable-oxygen/submodules/genius/docs/specs/itm-tunnel-auto-config.html
 
-
-  For details on iptables based kubeproxy implementation in netvirt, refer,
+- For details on iptables based kubeproxy implementation in netvirt, refer,
   https://docs.opendaylight.org/projects/netvirt/en/latest/specs/neon/coe-service-integration.html
