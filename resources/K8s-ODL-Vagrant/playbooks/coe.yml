@@ -7,6 +7,8 @@
     kubernetes_version: 1.9.4
     openvswitch_package_cache: /vagrant/cache/ovs
     golang_package_cache: /vagrant/cache/golang
+    golang_version: 1.11.5
+    golang_checksum: sha256:ff54aafedff961eb94792487e827515da683d61a5f9482f668008832631e5d25
 
   roles:
     - fkautz.bridge-utils-install
@@ -45,12 +47,23 @@
 - hosts: coe-configure
   vars:
     gopath: "{{ ansible_env.HOME }}/go"
-    coe_path: "{{ gopath }}/src/git.opendaylight.org/gerrit/p/coe.git"
+    coe_dir: "{{ gopath }}/src/git.opendaylight.org/gerrit/p"
+    coe_path: "{{ coe_dir }}/coe.git"
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/local/go/bin:{{ ansible_env.HOME }}/go/bin:/usr/local/go/bin"
     GOPATH: "{{ gopath }}"
     GOROOT: /usr/local/go
   tasks:
+    - name: 
+      file:
+        path: "{{ coe_dir }}"
+        state: directory
+    - name: Copy COE to go path
+      file:
+        path: "{{ coe_path }}"
+        src: "/home/vagrant/coe.git"
+        state: link
+        force: yes
     - name: Make CNI config directory
       file:
         path: /etc/cni/net.d
@@ -61,25 +74,12 @@
         src: templates/odlovs-cni.conf.j2
         dest: /etc/cni/net.d/odlovs-cni.conf
       become: true
-    - name: Create $HOME/go/bin
-      file:
-        path: "{{ ansible_env.HOME }}/go/bin"
-        state: directory
-    - name: Install dep
-      shell: curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-      args:
-        creates: "{{ gopath }}/bin/dep"
     - name: Fetch COE git repository
       git:
         repo: 'https://git.opendaylight.org/gerrit/p/coe.git'
         dest: "{{ coe_path }}"
-    - name: Fetch odl-cni dependencies with dep
-      shell: dep ensure -vendor-only
-      args:
-        chdir: "{{ coe_path }}/odlCNIPlugin/odlovs-cni"
-        creates: "{{ coe_path }}/odlCNIPlugin/odlovs-cni/vendor"
     - name: Build odlovs-cni
-      shell: go build
+      shell: GO111MODULE=on go build
       args:
         chdir: "{{ coe_path }}/odlCNIPlugin/odlovs-cni"
         creates: "{{ coe_path }}/odlCNIPlugin/odlovs-cni/odlovs-cni"
@@ -100,11 +100,6 @@
     GOPATH: "{{ gopath }}"
     GOROOT: /usr/local/go
   tasks:
-    - name: Fetch watcher dependencies with dep
-      shell: dep ensure
-      args:
-        chdir: "{{ coe_path }}/watcher"
-        creates: "{{ coe_path }}/watcher/vendor"
     - name: Build watcher
       shell: go build
       args:
