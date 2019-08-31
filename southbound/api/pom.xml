@@ -18,6 +18,6 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
 
   <groupId>org.opendaylight.coe</groupId>
   <artifactId>coe-southbound-api</artifactId>
-  <version>0.5.2-SNAPSHOT</version>
+  <version>0.5.3-SNAPSHOT</version>
   <packaging>bundle</packaging>
 </project>
