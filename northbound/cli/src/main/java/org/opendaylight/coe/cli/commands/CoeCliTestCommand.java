@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Copyright c 2017 Ericsson India Global Services Pvt Ltd. and others.All rights reserved. and others.  All rights reserved.
+ * Copyright © 2017 Ericsson India Global Services Pvt Ltd. and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * This is an example class. The class name can be renamed to match the command implementation that it will invoke.
  * Specify command details by updating the fields in the Command annotation below.
  */
-@Command(scope = "coe", name="coe", description = "add a description for the command")
+@Command(scope = "coe", name = "coe", description = "add a description for the command")
 public class CoeCliTestCommand extends OsgiCommandSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoeCliTestCommand.class);
